@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import mimetypes
 from dataclasses import dataclass
 from typing import Any
 from typing import BinaryIO
@@ -74,7 +75,7 @@ class VectorStoreService:
     async def get_vector_store_info(self) -> VectorStoreInfo:
         """Get information about the configured vector store."""
         try:
-            response = self.client.beta.vector_stores.retrieve(self.vector_store_id)
+            response = self.client.vector_stores.retrieve(self.vector_store_id)
             return VectorStoreInfo.from_openai_response(response.model_dump())
         except Exception as e:
             raise RuntimeError(f"Failed to retrieve vector store info: {e!s}") from e
@@ -88,14 +89,27 @@ class VectorStoreService:
     ) -> list[VectorStoreFile]:
         """List files in the vector store."""
         try:
-            response = self.client.beta.vector_stores.files.list(
+            response = self.client.vector_stores.files.list(
                 vector_store_id=self.vector_store_id,
                 limit=limit,
                 order=order,
                 after=after,
                 before=before,
             )
-            return [VectorStoreFile.from_openai_response(file.model_dump()) for file in response.data]
+            files = []
+            for file in response.data:
+                # Create VectorStoreFile manually since the response structure varies
+                vector_file = VectorStoreFile(
+                    id=file.id,
+                    filename=getattr(file, 'filename', f"file_{file.id}"),  # Fallback filename
+                    bytes=getattr(file, 'size', 0) or getattr(file, 'bytes', 0),
+                    created_at=file.created_at,
+                    status=file.status,
+                    usage_bytes=getattr(file, 'usage_bytes', None),
+                    object=getattr(file, 'object', 'vector_store.file'),
+                )
+                files.append(vector_file)
+            return files
         except Exception as e:
             raise RuntimeError(f"Failed to list vector store files: {e!s}") from e
 
@@ -107,21 +121,41 @@ class VectorStoreService:
         """Upload a file to the vector store."""
         try:
             # First, upload the file to OpenAI
-            uploaded_file = self.client.files.create(file=file, purpose="assistants")
+            # Guess the MIME type based on filename
+            mime_type, _ = mimetypes.guess_type(filename)
+            if not mime_type:
+                mime_type = "application/octet-stream"
+
+            # Reset file pointer to beginning
+            file.seek(0)
+
+            # Create a tuple with the file content and filename for OpenAI
+            file_tuple = (filename, file, mime_type)
+            uploaded_file = self.client.files.create(file=file_tuple, purpose="assistants")
 
             # Then, add it to the vector store
-            vector_store_file = self.client.beta.vector_stores.files.create(
+            vector_store_file = self.client.vector_stores.files.create(
                 vector_store_id=self.vector_store_id, file_id=uploaded_file.id
             )
 
-            return VectorStoreFile.from_openai_response(vector_store_file.model_dump())
+            # Create VectorStoreFile from the response
+            # Use filename from the original uploaded file since vector store file might not have it
+            return VectorStoreFile(
+                id=vector_store_file.id,
+                filename=uploaded_file.filename or filename,  # Use original filename as fallback
+                bytes=getattr(vector_store_file, 'size', 0) or uploaded_file.bytes,
+                created_at=vector_store_file.created_at,
+                status=vector_store_file.status,
+                usage_bytes=getattr(vector_store_file, 'usage_bytes', None),
+                object=getattr(vector_store_file, 'object', 'vector_store.file'),
+            )
         except Exception as e:
             raise RuntimeError(f"Failed to upload file to vector store: {e!s}") from e
 
     async def delete_file_from_vector_store(self, file_id: str) -> bool:
         """Delete a file from the vector store."""
         try:
-            self.client.beta.vector_stores.files.delete(vector_store_id=self.vector_store_id, file_id=file_id)
+            self.client.vector_stores.files.delete(vector_store_id=self.vector_store_id, file_id=file_id)
             return True
         except Exception as e:
             raise RuntimeError(f"Failed to delete file from vector store: {e!s}") from e
@@ -129,10 +163,20 @@ class VectorStoreService:
     async def get_file_info(self, file_id: str) -> VectorStoreFile:
         """Get information about a specific file in the vector store."""
         try:
-            response = self.client.beta.vector_stores.files.retrieve(
+            response = self.client.vector_stores.files.retrieve(
                 vector_store_id=self.vector_store_id, file_id=file_id
             )
-            return VectorStoreFile.from_openai_response(response.model_dump())
+
+            # Create VectorStoreFile manually since the response structure varies
+            return VectorStoreFile(
+                id=response.id,
+                filename=getattr(response, 'filename', f"file_{response.id}"),  # Fallback filename
+                bytes=getattr(response, 'size', 0) or getattr(response, 'bytes', 0),
+                created_at=response.created_at,
+                status=response.status,
+                usage_bytes=getattr(response, 'usage_bytes', None),
+                object=getattr(response, 'object', 'vector_store.file'),
+            )
         except Exception as e:
             raise RuntimeError(f"Failed to retrieve file info: {e!s}") from e
 

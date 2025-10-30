@@ -80,3 +80,5 @@ venv
 **/yarn-error.log
 
 workspace.code-workspace
+
+.claude

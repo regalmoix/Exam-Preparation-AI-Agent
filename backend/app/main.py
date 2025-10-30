@@ -355,7 +355,6 @@ async def upload_file_to_vector_store(file: Annotated[UploadFile, File()] = ...)
         # Read file content
         content = await file.read()
         file_obj = BytesIO(content)
-        file_obj.name = file.filename  # Set filename for OpenAI
 
         uploaded_file = await vector_store_service.upload_file_to_vector_store(file=file_obj, filename=file.filename)
 
