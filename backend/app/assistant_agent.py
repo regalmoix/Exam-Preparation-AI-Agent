@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import os
-
 from agents import Agent
 from agents.models.openai_responses import FileSearchTool
 from chatkit.agents import AgentContext
 
-KNOWLEDGE_VECTOR_STORE_ID = os.getenv("KNOWLEDGE_VECTOR_STORE_ID")
+from .config import config
 
 KNOWLEDGE_ASSISTANT_INSTRUCTIONS = """
 You are a **Federal Reserve Knowledge Assistant agent**.
@@ -42,12 +40,8 @@ Limit the entire response with citation to 2-3 sentences.
 
 
 def build_file_search_tool() -> FileSearchTool:
-    if not KNOWLEDGE_VECTOR_STORE_ID:
-        raise RuntimeError(
-            "KNOWLEDGE_VECTOR_STORE_ID is not set. See examples/knowledge_assistant/README.md for setup instructions."
-        )
     return FileSearchTool(
-        vector_store_ids=[KNOWLEDGE_VECTOR_STORE_ID],
+        vector_store_ids=[config.knowledge_vector_store_id],
         max_num_results=5,
     )
 

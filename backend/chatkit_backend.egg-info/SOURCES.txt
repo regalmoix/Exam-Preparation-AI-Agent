@@ -1,6 +1,7 @@
 pyproject.toml
 app/__init__.py
 app/assistant_agent.py
+app/config.py
 app/documents.py
 app/main.py
 app/memory_store.py

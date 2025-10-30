@@ -38,7 +38,15 @@ The backend lives in `examples/exam-prep-assistant/backend` and includes its own
    ```bash
    cd examples/exam-prep-assistant/backend
    uv sync
+
+   # Option 1: Use .env file (recommended)
+   cp .env.template .env
+   # Edit .env file with your actual values
+
+   # Option 2: Export variables directly
    export OPENAI_API_KEY="sk-proj-..."
+   export KNOWLEDGE_VECTOR_STORE_ID="vs_..."
+
    uv run uvicorn app.main:app --reload --port 8002
    ```
 

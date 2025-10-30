@@ -28,6 +28,7 @@ from openai.types.responses import ResponseInputContentParam
 from starlette.responses import JSONResponse
 
 from .assistant_agent import assistant_agent
+from .config import config
 from .documents import (
     DOCUMENTS,
     DOCUMENTS_BY_FILENAME,
@@ -38,6 +39,10 @@ from .documents import (
     as_dicts,
 )
 from .memory_store import MemoryStore
+
+# Validate configuration on startup
+if not config.validate():
+    raise RuntimeError("Invalid configuration. Please check your .env file and ensure all required variables are set.")
 
 
 def _normalise_filename(value: str) -> str:

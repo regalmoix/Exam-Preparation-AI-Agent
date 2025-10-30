@@ -8,6 +8,9 @@ package-lock.json
 # Python Files
 *.pyc
 
+# Environment Files
+.env
+
 # Vim Files
 *~
 *.swp
