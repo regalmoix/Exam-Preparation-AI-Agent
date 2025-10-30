@@ -4,7 +4,8 @@ uvicorn[standard]<0.37,>=0.36
 openai>=1.40
 openai-chatkit<2,>=1.0.2
 python-dotenv>=1.0.0
+pre-commit
 
 [dev]
-ruff<0.7,>=0.6.4
-mypy<2,>=1.8
+ruff
+mypy
