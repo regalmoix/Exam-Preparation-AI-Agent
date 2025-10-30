@@ -1,6 +1,6 @@
 import { StartScreenPrompt } from "@openai/chatkit";
 
-export const THEME_STORAGE_KEY = "knowledge-assistant-theme";
+export const THEME_STORAGE_KEY = "exam-prep-assistant-theme";
 
 const KNOWLEDGE_API_BASE =
   import.meta.env.VITE_KNOWLEDGE_API_BASE ?? "/knowledge";
