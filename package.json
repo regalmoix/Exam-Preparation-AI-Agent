@@ -1,5 +1,5 @@
 {
-  "name": "knowledge-assistant-stack",
+  "name": "exam-prep-assistant-stack",
   "private": true,
   "scripts": {
     "start": "concurrently --kill-others-on-fail --names backend,frontend \"npm run backend\" \"npm run frontend\"",
