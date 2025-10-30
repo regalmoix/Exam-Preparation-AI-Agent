@@ -101,12 +101,12 @@ class VectorStoreService:
                 # Create VectorStoreFile manually since the response structure varies
                 vector_file = VectorStoreFile(
                     id=file.id,
-                    filename=getattr(file, 'filename', f"file_{file.id}"),  # Fallback filename
-                    bytes=getattr(file, 'size', 0) or getattr(file, 'bytes', 0),
+                    filename=getattr(file, "filename", f"file_{file.id}"),  # Fallback filename
+                    bytes=getattr(file, "size", 0) or getattr(file, "bytes", 0),
                     created_at=file.created_at,
                     status=file.status,
-                    usage_bytes=getattr(file, 'usage_bytes', None),
-                    object=getattr(file, 'object', 'vector_store.file'),
+                    usage_bytes=getattr(file, "usage_bytes", None),
+                    object=getattr(file, "object", "vector_store.file"),
                 )
                 files.append(vector_file)
             return files
@@ -143,11 +143,11 @@ class VectorStoreService:
             return VectorStoreFile(
                 id=vector_store_file.id,
                 filename=uploaded_file.filename or filename,  # Use original filename as fallback
-                bytes=getattr(vector_store_file, 'size', 0) or uploaded_file.bytes,
+                bytes=getattr(vector_store_file, "size", 0) or uploaded_file.bytes,
                 created_at=vector_store_file.created_at,
                 status=vector_store_file.status,
-                usage_bytes=getattr(vector_store_file, 'usage_bytes', None),
-                object=getattr(vector_store_file, 'object', 'vector_store.file'),
+                usage_bytes=getattr(vector_store_file, "usage_bytes", None),
+                object=getattr(vector_store_file, "object", "vector_store.file"),
             )
         except Exception as e:
             raise RuntimeError(f"Failed to upload file to vector store: {e!s}") from e
@@ -163,19 +163,17 @@ class VectorStoreService:
     async def get_file_info(self, file_id: str) -> VectorStoreFile:
         """Get information about a specific file in the vector store."""
         try:
-            response = self.client.vector_stores.files.retrieve(
-                vector_store_id=self.vector_store_id, file_id=file_id
-            )
+            response = self.client.vector_stores.files.retrieve(vector_store_id=self.vector_store_id, file_id=file_id)
 
             # Create VectorStoreFile manually since the response structure varies
             return VectorStoreFile(
                 id=response.id,
-                filename=getattr(response, 'filename', f"file_{response.id}"),  # Fallback filename
-                bytes=getattr(response, 'size', 0) or getattr(response, 'bytes', 0),
+                filename=getattr(response, "filename", f"file_{response.id}"),  # Fallback filename
+                bytes=getattr(response, "size", 0) or getattr(response, "bytes", 0),
                 created_at=response.created_at,
                 status=response.status,
-                usage_bytes=getattr(response, 'usage_bytes', None),
-                object=getattr(response, 'object', 'vector_store.file'),
+                usage_bytes=getattr(response, "usage_bytes", None),
+                object=getattr(response, "object", "vector_store.file"),
             )
         except Exception as e:
             raise RuntimeError(f"Failed to retrieve file info: {e!s}") from e

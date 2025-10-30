@@ -9,7 +9,7 @@ export default defineConfig({
     port: 5172,
     host: "0.0.0.0",
     proxy: {
-      "/knowledge": {
+      "/exam-assistant": {
         target: backendTarget,
         changeOrigin: true,
       },

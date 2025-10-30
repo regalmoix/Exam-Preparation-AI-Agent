@@ -1,4 +1,5 @@
 """Configuration management for the Study Assistant AI Workshop backend."""
+
 from __future__ import annotations
 
 import os
