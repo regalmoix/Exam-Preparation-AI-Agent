@@ -21,13 +21,6 @@ select = [
 ignore = ["E501", "B904", "S301", "S608", "S311", "PLR09", "PLR2004", "RUF005", "RUF012"]
 fixable = ["ALL"]
 
-# Only run lint on selected subdirectories...
-# Even if a specific path is passed, ruff will pass...
-# This is to prevent IDE from complaining on files not enabled...
-[lint.per-file-ignores]
-"!app/**/*.py" = ["ALL"]
-"**/test_*.py" = ["S"]
-
 
 [lint.isort]
 force-single-line = true

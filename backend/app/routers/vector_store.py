@@ -1,0 +1,127 @@
+"""Vector store management API endpoints for exam assistant."""
+
+from __future__ import annotations
+
+from io import BytesIO
+from pathlib import Path
+from typing import Annotated
+from typing import Any
+
+from fastapi import APIRouter
+from fastapi import File
+from fastapi import HTTPException
+from fastapi import UploadFile
+
+from ..vector_store_service import as_file_dicts
+from ..vector_store_service import vector_store_service
+
+
+router = APIRouter()
+
+
+@router.get("/vector-store")
+async def get_vector_store_info() -> dict[str, Any]:
+    """Get information about the exam assistant vector store."""
+    try:
+        info = await vector_store_service.get_vector_store_info()
+        return {
+            "id": info.id,
+            "name": info.name,
+            "file_counts": info.file_counts,
+            "status": info.status,
+            "created_at": info.created_at,
+            "usage_bytes": info.usage_bytes,
+            "object": info.object,
+        }
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.get("/vector-store/files")
+async def list_vector_store_files(
+    limit: int = 20,
+    order: str = "desc",
+    after: str | None = None,
+    before: str | None = None,
+) -> dict[str, Any]:
+    """List files in the exam assistant vector store."""
+    try:
+        files = await vector_store_service.list_vector_store_files(limit=limit, order=order, after=after, before=before)
+        return {
+            "files": as_file_dicts(files),
+            "has_more": len(files) == limit,  # Simple pagination indicator
+        }
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post("/vector-store/files")
+async def upload_file_to_vector_store(file: Annotated[UploadFile, File()] = ...) -> dict[str, Any]:
+    """Upload a file to the exam assistant vector store."""
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="File must have a filename")
+
+    # Validate file type (optional - you can customize this)
+    allowed_extensions = {".pdf", ".txt", ".md", ".html", ".docx", ".json"}
+    file_extension = Path(file.filename).suffix.lower()
+    if file_extension not in allowed_extensions:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File type {file_extension} not supported. Allowed types: {', '.join(allowed_extensions)}",
+        )
+
+    try:
+        # Read file content
+        content = await file.read()
+        file_obj = BytesIO(content)
+
+        uploaded_file = await vector_store_service.upload_file_to_vector_store(file=file_obj, filename=file.filename)
+
+        return {
+            "message": "File uploaded successfully",
+            "file": {
+                "id": uploaded_file.id,
+                "filename": uploaded_file.filename,
+                "bytes": uploaded_file.bytes,
+                "status": uploaded_file.status,
+            },
+        }
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    finally:
+        await file.close()
+
+
+@router.get("/vector-store/files/{file_id}")
+async def get_vector_store_file_info(file_id: str) -> dict[str, Any]:
+    """Get information about a specific file in the exam assistant vector store."""
+    try:
+        file_info = await vector_store_service.get_file_info(file_id)
+        return {
+            "id": file_info.id,
+            "filename": file_info.filename,
+            "bytes": file_info.bytes,
+            "created_at": file_info.created_at,
+            "status": file_info.status,
+            "usage_bytes": file_info.usage_bytes,
+            "object": file_info.object,
+        }
+    except RuntimeError as exc:
+        if "not found" in str(exc).lower():
+            raise HTTPException(status_code=404, detail="File not found") from exc
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.delete("/vector-store/files/{file_id}")
+async def delete_file_from_vector_store(file_id: str) -> dict[str, str]:
+    """Delete a file from the exam assistant vector store."""
+    try:
+        success = await vector_store_service.delete_file_from_vector_store(file_id)
+        if success:
+            return {"message": "File deleted successfully"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to delete file")
+    except RuntimeError as exc:
+        if "not found" in str(exc).lower():
+            raise HTTPException(status_code=404, detail="File not found") from exc
+        raise HTTPException(status_code=500, detail=str(exc)) from exc

@@ -6,6 +6,10 @@ app/documents.py
 app/main.py
 app/memory_store.py
 app/vector_store_service.py
+app/routers/__init__.py
+app/routers/chatkit.py
+app/routers/documents.py
+app/routers/vector_store.py
 chatkit_backend.egg-info/PKG-INFO
 chatkit_backend.egg-info/SOURCES.txt
 chatkit_backend.egg-info/dependency_links.txt
