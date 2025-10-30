@@ -1,0 +1,84 @@
+.idea/
+package-lock.json
+
+# OS Files
+.DS_Store
+._.DS_Store
+
+# Python Files
+*.pyc
+
+# Environment Files
+.env
+
+# Vim Files
+*~
+*.swp
+
+# Cloud9 files
+.c9/
+.~c9_*
+
+# PyTest Files
+.cache/
+*.pytest_cache/
+
+#cscope
+cscope.*
+
+nohup.out
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
+# Ignore any extension builds
+*.pem
+*.crx
+
+# Ignore compiled assets
+.webassets-cache/
+
+# Ignroe any CTags files
+tags
+
+# ignore Node Modules
+node_modules/
+frontend/node_modules/
+frontend/package-lock.json/
+
+backend/.venv
+
+# Jest snapshots
+ __snapshots__/
+
+#sftp config
+sftp-config.json
+.remote-sync.json
+.vscode/*
+
+# emacs files
+.dir-locals.el
+
+# Dist packages
+dist
+
+
+# Databricks Extension config
+.databricks
+
+#pydev
+.pydevproject
+.project
+
+
+
+venv
+
+# Mobile expo
+**/yarn-error.log
+
+workspace.code-workspace
+
+.claude
