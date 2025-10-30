@@ -2,31 +2,34 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
-from chatkit.store import NotFoundError, Store
-from chatkit.types import Attachment, Page, Thread, ThreadItem, ThreadMetadata
+from chatkit.store import NotFoundError
+from chatkit.store import Store
+from chatkit.types import Attachment
+from chatkit.types import Page
+from chatkit.types import Thread
+from chatkit.types import ThreadItem
+from chatkit.types import ThreadMetadata
 
 
 @dataclass
 class _ThreadState:
     thread: ThreadMetadata
-    items: List[ThreadItem]
+    items: list[ThreadItem]
 
 
 class MemoryStore(Store[dict[str, Any]]):
     """Simple in-memory store compatible with the ChatKit server interface."""
 
     def __init__(self) -> None:
-        self._threads: Dict[str, _ThreadState] = {}
+        self._threads: dict[str, _ThreadState] = {}
         # Attachments intentionally unsupported; use a real store that enforces auth.
 
     @staticmethod
     def _coerce_thread_metadata(thread: ThreadMetadata | Thread) -> ThreadMetadata:
         """Return thread metadata without any embedded items (openai-chatkit>=1.0)."""
-        has_items = isinstance(thread, Thread) or "items" in getattr(
-            thread, "model_fields_set", set()
-        )
+        has_items = isinstance(thread, Thread) or "items" in getattr(thread, "model_fields_set", set())
         if not has_items:
             return thread.model_copy(deep=True)
 
@@ -85,7 +88,7 @@ class MemoryStore(Store[dict[str, Any]]):
         self._threads.pop(thread_id, None)
 
     # -- Thread items ----------------------------------------------------
-    def _items(self, thread_id: str) -> List[ThreadItem]:
+    def _items(self, thread_id: str) -> list[ThreadItem]:
         state = self._threads.get(thread_id)
         if state is None:
             state = _ThreadState(
@@ -121,9 +124,7 @@ class MemoryStore(Store[dict[str, Any]]):
         next_after = slice_items[-1].id if has_more and slice_items else None
         return Page(data=slice_items, has_more=has_more, after=next_after)
 
-    async def add_thread_item(
-        self, thread_id: str, item: ThreadItem, context: dict[str, Any]
-    ) -> None:
+    async def add_thread_item(self, thread_id: str, item: ThreadItem, context: dict[str, Any]) -> None:
         self._items(thread_id).append(item.model_copy(deep=True))
 
     async def save_item(self, thread_id: str, item: ThreadItem, context: dict[str, Any]) -> None:
@@ -140,9 +141,7 @@ class MemoryStore(Store[dict[str, Any]]):
                 return item.model_copy(deep=True)
         raise NotFoundError(f"Item {item_id} not found")
 
-    async def delete_thread_item(
-        self, thread_id: str, item_id: str, context: dict[str, Any]
-    ) -> None:
+    async def delete_thread_item(self, thread_id: str, item_id: str, context: dict[str, Any]) -> None:
         items = self._items(thread_id)
         self._threads[thread_id].items = [item for item in items if item.id != item_id]
 
@@ -170,6 +169,4 @@ class MemoryStore(Store[dict[str, Any]]):
         )
 
     async def delete_attachment(self, attachment_id: str, context: dict[str, Any]) -> None:
-        raise NotImplementedError(
-            "MemoryStore does not delete attachments because they are never stored."
-        )
+        raise NotImplementedError("MemoryStore does not delete attachments because they are never stored.")

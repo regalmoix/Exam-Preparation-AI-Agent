@@ -2,43 +2,57 @@ from __future__ import annotations
 
 import mimetypes
 import re
+from collections.abc import AsyncIterator
+from collections.abc import Iterable
+from io import BytesIO
 from itertools import chain
 from pathlib import Path
-from typing import Any, AsyncIterator, Iterable
+from typing import Annotated
+from typing import Any
 
-from agents import Agent, RunConfig, Runner
+from agents import Agent
+from agents import RunConfig
+from agents import Runner
 from agents.model_settings import ModelSettings
-from chatkit.agents import AgentContext, stream_agent_response
-from chatkit.server import ChatKitServer, StreamingResult
-from chatkit.types import (
-    Annotation,
-    AssistantMessageContent,
-    AssistantMessageItem,
-    Attachment,
-    ClientToolCallItem,
-    ThreadItem,
-    ThreadMetadata,
-    ThreadStreamEvent,
-    UserMessageItem,
-)
-from fastapi import Depends, FastAPI, HTTPException, Request
+from chatkit.agents import AgentContext
+from chatkit.agents import stream_agent_response
+from chatkit.server import ChatKitServer
+from chatkit.server import StreamingResult
+from chatkit.types import Annotation
+from chatkit.types import AssistantMessageContent
+from chatkit.types import AssistantMessageItem
+from chatkit.types import Attachment
+from chatkit.types import ClientToolCallItem
+from chatkit.types import ThreadItem
+from chatkit.types import ThreadMetadata
+from chatkit.types import ThreadStreamEvent
+from chatkit.types import UserMessageItem
+from fastapi import Depends
+from fastapi import FastAPI
+from fastapi import File
+from fastapi import HTTPException
+from fastapi import Request
+from fastapi import UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, Response, StreamingResponse
+from fastapi.responses import FileResponse
+from fastapi.responses import Response
+from fastapi.responses import StreamingResponse
 from openai.types.responses import ResponseInputContentParam
 from starlette.responses import JSONResponse
 
 from .assistant_agent import assistant_agent
 from .config import config
-from .documents import (
-    DOCUMENTS,
-    DOCUMENTS_BY_FILENAME,
-    DOCUMENTS_BY_ID,
-    DOCUMENTS_BY_SLUG,
-    DOCUMENTS_BY_STEM,
-    DocumentMetadata,
-    as_dicts,
-)
+from .documents import DOCUMENTS
+from .documents import DOCUMENTS_BY_FILENAME
+from .documents import DOCUMENTS_BY_ID
+from .documents import DOCUMENTS_BY_SLUG
+from .documents import DOCUMENTS_BY_STEM
+from .documents import DocumentMetadata
+from .documents import as_dicts
 from .memory_store import MemoryStore
+from .vector_store_service import as_file_dicts
+from .vector_store_service import vector_store_service
+
 
 # Validate configuration on startup
 if not config.validate():
@@ -158,12 +172,10 @@ class KnowledgeAssistantServer(ChatKitServer[dict[str, Any]]):
         async for event in stream_agent_response(agent_context, result):
             yield event
 
-    async def to_message_content(self, input: Attachment) -> ResponseInputContentParam:
+    async def to_message_content(self, _input: Attachment) -> ResponseInputContentParam:
         raise RuntimeError("File attachments are not supported in this demo.")
 
-    async def latest_citations(
-        self, thread_id: str, context: dict[str, Any]
-    ) -> list[dict[str, Any]]:
+    async def latest_citations(self, thread_id: str, context: dict[str, Any]) -> list[dict[str, Any]]:
         items = await self.store.load_thread_items(
             thread_id,
             after=None,
@@ -198,9 +210,7 @@ class KnowledgeAssistantServer(ChatKitServer[dict[str, Any]]):
                 }
         if not found:
             texts = chain.from_iterable(
-                content.text.splitlines()
-                for content in item.content
-                if isinstance(content, AssistantMessageContent)
+                content.text.splitlines() for content in item.content if isinstance(content, AssistantMessageContent)
             )
             for line in texts:
                 for document in _documents_from_text(line):
@@ -233,9 +243,7 @@ def get_server() -> KnowledgeAssistantServer:
 
 
 @app.post("/knowledge/chatkit")
-async def chatkit_endpoint(
-    request: Request, server: KnowledgeAssistantServer = Depends(get_server)
-) -> Response:
+async def chatkit_endpoint(request: Request, server: Annotated[KnowledgeAssistantServer, Depends(get_server)]) -> Response:
     payload = await request.body()
     result = await server.process(payload, {"request": request})
     if isinstance(result, StreamingResult):
@@ -273,12 +281,12 @@ async def document_file(document_id: str) -> FileResponse:
 async def thread_citations(
     thread_id: str,
     request: Request,
-    server: KnowledgeAssistantServer = Depends(get_server),
+    server: Annotated[KnowledgeAssistantServer, Depends(get_server)],
 ) -> dict[str, Any]:
     context = {"request": request}
     try:
         citations = await server.latest_citations(thread_id, context=context)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     document_ids = sorted({citation["document_id"] for citation in citations})
     return {"documentIds": document_ids, "citations": citations}
@@ -287,3 +295,115 @@ async def thread_citations(
 @app.get("/knowledge/health")
 async def health_check() -> dict[str, str]:
     return {"status": "healthy"}
+
+
+# Vector Store Management Endpoints
+
+
+@app.get("/knowledge/vector-store")
+async def get_vector_store_info() -> dict[str, Any]:
+    """Get information about the configured vector store."""
+    try:
+        info = await vector_store_service.get_vector_store_info()
+        return {
+            "id": info.id,
+            "name": info.name,
+            "file_counts": info.file_counts,
+            "status": info.status,
+            "created_at": info.created_at,
+            "usage_bytes": info.usage_bytes,
+            "object": info.object,
+        }
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.get("/knowledge/vector-store/files")
+async def list_vector_store_files(
+    limit: int = 20,
+    order: str = "desc",
+    after: str | None = None,
+    before: str | None = None,
+) -> dict[str, Any]:
+    """List files in the vector store."""
+    try:
+        files = await vector_store_service.list_vector_store_files(limit=limit, order=order, after=after, before=before)
+        return {
+            "files": as_file_dicts(files),
+            "has_more": len(files) == limit,  # Simple pagination indicator
+        }
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/knowledge/vector-store/files")
+async def upload_file_to_vector_store(file: Annotated[UploadFile, File()] = ...) -> dict[str, Any]:
+    """Upload a file to the vector store."""
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="File must have a filename")
+
+    # Validate file type (optional - you can customize this)
+    allowed_extensions = {".pdf", ".txt", ".md", ".html", ".docx", ".json"}
+    file_extension = Path(file.filename).suffix.lower()
+    if file_extension not in allowed_extensions:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File type {file_extension} not supported. Allowed types: {', '.join(allowed_extensions)}",
+        )
+
+    try:
+        # Read file content
+        content = await file.read()
+        file_obj = BytesIO(content)
+        file_obj.name = file.filename  # Set filename for OpenAI
+
+        uploaded_file = await vector_store_service.upload_file_to_vector_store(file=file_obj, filename=file.filename)
+
+        return {
+            "message": "File uploaded successfully",
+            "file": {
+                "id": uploaded_file.id,
+                "filename": uploaded_file.filename,
+                "bytes": uploaded_file.bytes,
+                "status": uploaded_file.status,
+            },
+        }
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    finally:
+        await file.close()
+
+
+@app.get("/knowledge/vector-store/files/{file_id}")
+async def get_vector_store_file_info(file_id: str) -> dict[str, Any]:
+    """Get information about a specific file in the vector store."""
+    try:
+        file_info = await vector_store_service.get_file_info(file_id)
+        return {
+            "id": file_info.id,
+            "filename": file_info.filename,
+            "bytes": file_info.bytes,
+            "created_at": file_info.created_at,
+            "status": file_info.status,
+            "usage_bytes": file_info.usage_bytes,
+            "object": file_info.object,
+        }
+    except RuntimeError as exc:
+        if "not found" in str(exc).lower():
+            raise HTTPException(status_code=404, detail="File not found") from exc
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.delete("/knowledge/vector-store/files/{file_id}")
+async def delete_file_from_vector_store(file_id: str) -> dict[str, str]:
+    """Delete a file from the vector store."""
+    try:
+        success = await vector_store_service.delete_file_from_vector_store(file_id)
+        if success:
+            return {"message": "File deleted successfully"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to delete file")
+    except RuntimeError as exc:
+        if "not found" in str(exc).lower():
+            raise HTTPException(status_code=404, detail="File not found") from exc
+        raise HTTPException(status_code=500, detail=str(exc)) from exc

@@ -6,6 +6,7 @@ from chatkit.agents import AgentContext
 
 from .config import config
 
+
 KNOWLEDGE_ASSISTANT_INSTRUCTIONS = """
 You are a **Federal Reserve Knowledge Assistant agent**.
 
@@ -24,7 +25,7 @@ These files contain the definitive information about the September 2025 FOMC mee
 
 **Your task**
 - Always call the `file_search` tool before responding. Use the passages it returns as your evidence.
-- Compose a concise answer (2–4 sentences) grounded **only** in the retrieved passages.
+- Compose a concise answer (2-4 sentences) grounded **only** in the retrieved passages.
 - Every factual sentence must include a citation in the format `(filename, page/section)` using the filenames listed above. If you cannot provide such a citation, say "I don't see that in the knowledge base." instead of guessing.
 - After the answer, optionally list key supporting bullets—each bullet needs its own citation.
 - Finish with a `Sources:` section listing each supporting document on its own line: `- filename (page/section)`. Use the exact filenames shown above so the client can highlight the source documents. Do not omit this section even if there is only one source.

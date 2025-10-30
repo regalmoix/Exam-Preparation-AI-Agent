@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from collections.abc import Iterable
+from dataclasses import asdict
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 
 def _normalise(value: str) -> str:
@@ -77,9 +78,7 @@ DOCUMENTS: tuple[DocumentMetadata, ...] = (
 )
 DOCUMENTS_BY_ID: dict[str, DocumentMetadata] = {doc.id: doc for doc in DOCUMENTS}
 
-DOCUMENTS_BY_FILENAME: dict[str, DocumentMetadata] = {
-    _normalise(doc.filename): doc for doc in DOCUMENTS
-}
+DOCUMENTS_BY_FILENAME: dict[str, DocumentMetadata] = {_normalise(doc.filename): doc for doc in DOCUMENTS}
 
 DOCUMENTS_BY_STEM: dict[str, DocumentMetadata] = {_normalise(doc.stem): doc for doc in DOCUMENTS}
 
@@ -104,8 +103,8 @@ __all__ = [
     "DOCUMENTS",
     "DOCUMENTS_BY_FILENAME",
     "DOCUMENTS_BY_ID",
-    "DOCUMENTS_BY_STEM",
     "DOCUMENTS_BY_SLUG",
+    "DOCUMENTS_BY_STEM",
     "DocumentMetadata",
     "as_dicts",
 ]

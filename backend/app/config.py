@@ -1,8 +1,10 @@
 """Configuration management for the Study Assistant AI Workshop backend."""
+from __future__ import annotations
 
 import os
 
-from dotenv import find_dotenv, load_dotenv
+from dotenv import find_dotenv
+from dotenv import load_dotenv
 
 
 class Config:
