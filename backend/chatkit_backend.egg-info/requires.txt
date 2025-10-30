@@ -1,0 +1,9 @@
+fastapi<0.116,>=0.114.1
+httpx<0.29,>=0.28
+uvicorn[standard]<0.37,>=0.36
+openai>=1.40
+openai-chatkit<2,>=1.0.2
+
+[dev]
+ruff<0.7,>=0.6.4
+mypy<2,>=1.8
