@@ -5,10 +5,16 @@ app/config.py
 app/documents.py
 app/main.py
 app/memory_store.py
+app/server.py
 app/vector_store_service.py
+app/agents/__init__.py
+app/agents/base.py
+app/agents/intent_classifier.py
+app/agents/summarizer.py
 app/routers/__init__.py
 app/routers/chatkit.py
 app/routers/documents.py
+app/routers/study_agents.py
 app/routers/vector_store.py
 chatkit_backend.egg-info/PKG-INFO
 chatkit_backend.egg-info/SOURCES.txt

@@ -1,10 +1,10 @@
 import clsx from "clsx";
 
-import type { KnowledgeDocument } from "../hooks/useKnowledgeDocuments";
-import { KNOWLEDGE_DOCUMENT_FILE_URL } from "../lib/config";
+import type { StudyDocument } from "../hooks/useStudyDocuments";
+import { EXAM_PREP_DOCUMENT_FILE_URL } from "../lib/config";
 
 type DocumentPreviewModalProps = {
-  document: KnowledgeDocument | null;
+  document: StudyDocument | null;
   onClose: () => void;
 };
 
@@ -13,7 +13,7 @@ export function DocumentPreviewModal({ document, onClose }: DocumentPreviewModal
     return null;
   }
 
-  const previewUrl = KNOWLEDGE_DOCUMENT_FILE_URL(document.id);
+  const previewUrl = EXAM_PREP_DOCUMENT_FILE_URL(document.id);
   const fileType = inferFileType(document.filename);
 
   return (

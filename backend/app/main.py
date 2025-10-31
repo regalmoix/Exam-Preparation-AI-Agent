@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import config
 from .routers import chatkit
 from .routers import documents
+from .routers import study_agents
 from .routers import vector_store
 
 
@@ -27,6 +28,7 @@ app.add_middleware(
 app.include_router(chatkit.router, prefix="/exam-assistant", tags=["ChatKit"])
 app.include_router(documents.router, prefix="/exam-assistant", tags=["Documents"])
 app.include_router(vector_store.router, prefix="/exam-assistant", tags=["Vector Store"])
+app.include_router(study_agents.router, prefix="/exam-assistant", tags=["Study Agents"])
 
 
 # All endpoints have been moved to routers under /exam-assistant namespace

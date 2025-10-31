@@ -12,8 +12,8 @@ Ground every answer with citations using a ChatKit-powered knowledge workflow. T
 - Node.js 20+
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) (recommended) or `pip`
 - OpenAI API key exported as `OPENAI_API_KEY`
-- ChatKit domain key exported as `VITE_KNOWLEDGE_CHATKIT_API_DOMAIN_KEY` (use any non-empty placeholder locally; replace with the real key in production)
-- Vector store ID exported as `KNOWLEDGE_VECTOR_STORE_ID` (see below)
+- ChatKit domain key exported as `VITE_EXAM_PREP_CHATKIT_API_DOMAIN_KEY` (use any non-empty placeholder locally; replace with the real key in production)
+- Vector store ID exported as `EXAM_PREP_VECTOR_STORE_ID` (see below)
 
 ## Quickstart Overview
 1. Prepare the knowledge vector store and start the backend API.
@@ -31,7 +31,7 @@ The backend lives in `examples/exam-prep-assistant/backend` and includes its own
    - Upload the reference documents and copy the store ID (e.g. `vs_abc123`).
    - Export the ID so the agent can perform grounded search:
      ```bash
-     export KNOWLEDGE_VECTOR_STORE_ID=vs_...
+     export EXAM_PREP_VECTOR_STORE_ID=vs_...
      ```
 
 2. Install dependencies and launch the API:
@@ -45,7 +45,7 @@ The backend lives in `examples/exam-prep-assistant/backend` and includes its own
 
    # Option 2: Export variables directly
    export OPENAI_API_KEY="sk-proj-..."
-   export KNOWLEDGE_VECTOR_STORE_ID="vs_..."
+   export EXAM_PREP_VECTOR_STORE_ID="vs_..."
 
    uv run uvicorn app.main:app --reload --port 8002
    ```
@@ -62,13 +62,13 @@ npm run dev
 
 The dev server runs at `http://127.0.0.1:5172` and proxies `/knowledge` calls to the API, which is sufficient for local iteration.
 
-From the `examples/exam-prep-assistant` directory you can also run `npm start` to launch the backend (`uv sync` + Uvicorn) and frontend together. Ensure `uv` is installed and required environment variables (such as `OPENAI_API_KEY`, `KNOWLEDGE_VECTOR_STORE_ID`, and the domain key) are exported before using this shortcut.
+From the `examples/exam-prep-assistant` directory you can also run `npm start` to launch the backend (`uv sync` + Uvicorn) and frontend together. Ensure `uv` is installed and required environment variables (such as `OPENAI_API_KEY`, `EXAM_PREP_VECTOR_STORE_ID`, and the domain key) are exported before using this shortcut.
 
 Regarding the domain public key, you can use any string during local development. However, for production deployments:
 
 1. Host the frontend on infrastructure you control behind a managed domain.
 2. Register that domain on the [domain allowlist page](https://platform.openai.com/settings/organization/security/domain-allowlist) and add it to `examples/exam-prep-assistant/frontend/vite.config.ts` under `server.allowedHosts`.
-3. Set `VITE_KNOWLEDGE_CHATKIT_API_DOMAIN_KEY` to the key returned by the allowlist page and confirm `examples/exam-prep-assistant/frontend/src/lib/config.ts` reflects any env overrides you expect (API URLs, prompt text, etc.).
+3. Set `VITE_EXAM_PREP_CHATKIT_API_DOMAIN_KEY` to the key returned by the allowlist page and confirm `examples/exam-prep-assistant/frontend/src/lib/config.ts` reflects any env overrides you expect (API URLs, prompt text, etc.).
 
 To rehearse remote-access flows before launch, expose the app temporarily with a tunnel—e.g. `ngrok http 5172` or `cloudflared tunnel --url http://localhost:5172`—and allowlist that hostname before testing.
 
@@ -84,7 +84,7 @@ Each response streams with inline citations; the document grid highlights refere
 
 ### Customize the demo
 
-- **Vector store**: Point `KNOWLEDGE_VECTOR_STORE_ID` to a different store to change the knowledge base.
+- **Vector store**: Point `EXAM_PREP_VECTOR_STORE_ID` to a different store to change the knowledge base.
 - **Document manifest**: Edit `examples/exam-prep-assistant/backend/app/documents.py` to rename or hide files in the grid.
 - **Frontend config**: Override default endpoints with `VITE_KNOWLEDGE_*` variables or adjust behavior in `frontend/src/lib/config.ts`.
 - **Port and proxy**: Update `frontend/vite.config.ts` if you need different ports or additional allowed hosts.

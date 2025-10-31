@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { KNOWLEDGE_DOCUMENTS_URL } from "../lib/config";
+import { EXAM_PREP_DOCUMENTS_URL } from "../lib/config";
 
-export type KnowledgeDocument = {
+export type StudyDocument = {
   id: string;
   filename: string;
   title: string;
@@ -10,11 +10,11 @@ export type KnowledgeDocument = {
 };
 
 type DocumentsResponse = {
-  documents: KnowledgeDocument[];
+  documents: StudyDocument[];
 };
 
-export function useKnowledgeDocuments() {
-  const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
+export function useStudyDocuments() {
+  const [documents, setDocuments] = useState<StudyDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +23,7 @@ export function useKnowledgeDocuments() {
     setError(null);
 
     try {
-      const response = await fetch(KNOWLEDGE_DOCUMENTS_URL, {
+      const response = await fetch(EXAM_PREP_DOCUMENTS_URL, {
         headers: { Accept: "application/json" },
       });
 

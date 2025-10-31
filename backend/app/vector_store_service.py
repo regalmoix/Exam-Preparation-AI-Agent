@@ -70,7 +70,7 @@ class VectorStoreService:
     def __init__(self):
         """Initialize the vector store service."""
         self.client = OpenAI(api_key=config.openai_api_key)
-        self.vector_store_id = config.knowledge_vector_store_id
+        self.vector_store_id = config.exam_prep_vector_store_id
 
     async def get_vector_store_info(self) -> VectorStoreInfo:
         """Get information about the configured vector store."""
@@ -131,7 +131,7 @@ class VectorStoreService:
 
             # Create a tuple with the file content and filename for OpenAI
             file_tuple = (filename, file, mime_type)
-            uploaded_file = self.client.files.create(file=file_tuple, purpose="assistants")
+            uploaded_file = self.client.files.create(file=file_tuple, purpose="user_data")
 
             # Then, add it to the vector store
             vector_store_file = self.client.vector_stores.files.create(
@@ -159,6 +159,34 @@ class VectorStoreService:
             return True
         except Exception as e:
             raise RuntimeError(f"Failed to delete file from vector store: {e!s}") from e
+
+    async def delete_file_from_openai(self, file_id: str) -> bool:
+        """Delete a file from OpenAI Files API."""
+        try:
+            self.client.files.delete(file_id)
+            return True
+        except Exception as e:
+            # Don't raise error if file doesn't exist in OpenAI
+            print(f"Warning: Could not delete file from OpenAI Files API: {e}")
+            return False
+
+    async def delete_file_completely(self, file_id: str) -> dict[str, bool]:
+        """Delete a file from all locations: vector store, OpenAI Files, and local storage."""
+        results = {"vector_store": False, "openai_files": False, "local_storage": False}
+
+        # 1. Delete from vector store
+        try:
+            results["vector_store"] = await self.delete_file_from_vector_store(file_id)
+        except Exception as e:
+            print(f"Failed to delete from vector store: {e}")
+
+        # 2. Delete from OpenAI Files API
+        try:
+            results["openai_files"] = await self.delete_file_from_openai(file_id)
+        except Exception as e:
+            print(f"Failed to delete from OpenAI Files: {e}")
+
+        return results
 
     async def get_file_info(self, file_id: str) -> VectorStoreFile:
         """Get information about a specific file in the vector store."""
