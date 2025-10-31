@@ -12,7 +12,7 @@ from fastapi import Response
 from fastapi.responses import StreamingResponse
 from starlette.responses import JSONResponse
 
-from ..server import KnowledgeAssistantServer
+from ..server import ExamPrepAssistantServer
 from ..server import get_server
 
 
@@ -21,7 +21,7 @@ router = APIRouter()
 
 @router.post("/chatkit")
 async def chatkit_endpoint(
-    request: Request, server: Annotated[KnowledgeAssistantServer, Depends(get_server)]
+    request: Request, server: Annotated[ExamPrepAssistantServer, Depends(get_server)]
 ) -> Response:
     """Main ChatKit interaction endpoint for the exam assistant."""
     payload = await request.body()
