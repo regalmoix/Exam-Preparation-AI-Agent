@@ -4,7 +4,7 @@ from agents import Agent
 from agents.models.openai_responses import FileSearchTool
 from chatkit.agents import AgentContext
 
-from .config import config
+from .services.config import config
 
 
 EXAM_PREP_ASSISTANT_INSTRUCTIONS = """

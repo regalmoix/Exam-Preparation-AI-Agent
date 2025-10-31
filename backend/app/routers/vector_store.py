@@ -14,11 +14,11 @@ from fastapi import File
 from fastapi import HTTPException
 from fastapi import UploadFile
 
-from ..document_metadata import DocumentMetadata
-from ..document_metadata import metadata_store
-from ..document_summarizer import document_summarizer
-from ..vector_store_service import as_file_dicts
-from ..vector_store_service import vector_store_service
+from ..models.document_metadata import DocumentMetadata
+from ..models.document_metadata import metadata_store
+from ..services.document_summarizer import document_summarizer
+from ..services.vector_store_service import as_file_dicts
+from ..services.vector_store_service import vector_store_service
 
 
 router = APIRouter()

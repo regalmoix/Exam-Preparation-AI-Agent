@@ -3,10 +3,10 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .config import config
 from .routers import chatkit
 from .routers import documents
 from .routers import vector_store
+from .services.config import config
 
 
 # Validate configuration on startup

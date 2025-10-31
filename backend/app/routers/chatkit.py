@@ -12,8 +12,8 @@ from fastapi import Response
 from fastapi.responses import StreamingResponse
 from starlette.responses import JSONResponse
 
-from ..server import ExamPrepAssistantServer
-from ..server import get_server
+from ..services.server import ExamPrepAssistantServer
+from ..services.server import get_server
 
 
 router = APIRouter()

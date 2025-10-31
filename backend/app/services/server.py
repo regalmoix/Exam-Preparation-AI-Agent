@@ -20,7 +20,7 @@ from chatkit.types import ThreadStreamEvent
 from chatkit.types import UserMessageItem
 from openai.types.responses import ResponseInputContentParam
 
-from .assistant_agent import assistant_agent
+from ..assistant_agent import assistant_agent
 from .memory_store import MemoryStore
 
 

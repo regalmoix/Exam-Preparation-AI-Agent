@@ -11,8 +11,8 @@ from fastapi import APIRouter
 from fastapi import HTTPException
 from fastapi.responses import Response
 
-from ..document_metadata import metadata_store
-from ..vector_store_service import vector_store_service
+from ..models.document_metadata import metadata_store
+from ..services.vector_store_service import vector_store_service
 
 
 router = APIRouter()
