@@ -11,6 +11,7 @@ from agents import Runner
 
 from .agents import FlashcardGeneratorAgent
 from .agents import IntentClassifierAgent
+from .agents import RagQAAgent
 from .agents import ResearchAgent
 from .agents import SummarizerAgent
 
@@ -24,6 +25,7 @@ class StudyAgentRunner:
             "intent_classifier": IntentClassifierAgent,
             "summarizer": SummarizerAgent,
             "research": ResearchAgent,
+            "rag_qa": RagQAAgent,
             "flashcard_generator": FlashcardGeneratorAgent,
         }
 
@@ -33,26 +35,22 @@ class StudyAgentRunner:
         # Default run configuration
         self.run_config = RunConfig(
             model_settings=self.model_settings,
-            trace_save_url=None,  # Can be configured for debugging
-            environment_name="study_assistant",
         )
 
     async def classify_intent(self, query: str, user_id: str | None = None) -> dict[str, Any]:
         """Classify user intent using the intent classifier agent."""
         try:
-            runner = Runner(agent=self.agents["intent_classifier"], run_config=self.run_config)
-
             # Prepare the message for intent classification
             messages = [{"role": "user", "content": f"Classify this student query: '{query}'"}]
 
-            result = await runner.run(messages=messages)
+            result = await Runner.run(self.agents["intent_classifier"], input=messages, run_config=self.run_config)
 
             return {
                 "success": True,
                 "task_id": str(uuid4()),
-                "classification": result.response,
+                "classification": result.final_output,
                 "reasoning": [f"Analyzed query: {query}"],
-                "metadata": {"user_id": user_id, "agent_used": "intent_classifier", "model": self.model_settings.model},
+                "metadata": {"user_id": user_id, "agent_used": "intent_classifier", "model": "gpt-4o-mini"},
             }
 
         except Exception as e:
@@ -67,8 +65,6 @@ class StudyAgentRunner:
     ) -> dict[str, Any]:
         """Generate document summary using the summarizer agent."""
         try:
-            runner = Runner(agent=self.agents["summarizer"], run_config=self.run_config)
-
             # Prepare the summarization request
             prompt = f"""Please create a comprehensive study summary for document ID: {document_id}
 
@@ -83,12 +79,12 @@ Please:
 """
 
             messages = [{"role": "user", "content": prompt}]
-            result = await runner.run(messages=messages)
+            result = await Runner.run(self.agents["summarizer"], input=messages, run_config=self.run_config)
 
             return {
                 "success": True,
                 "task_id": str(uuid4()),
-                "summary": result.response,
+                "summary": result.final_output,
                 "reasoning": ["Retrieved document content", "Extracted key concepts", "Generated structured summary"],
                 "metadata": {
                     "document_id": document_id,
@@ -111,8 +107,6 @@ Please:
     ) -> dict[str, Any]:
         """Conduct research using the research agent."""
         try:
-            runner = Runner(agent=self.agents["research"], run_config=self.run_config)
-
             # Prepare the research request
             prompt = f"""Conduct comprehensive research on: "{query}"
 
@@ -127,13 +121,13 @@ Focus on academic, educational, and research sources that would be valuable for 
 """
 
             messages = [{"role": "user", "content": prompt}]
-            result = await runner.run(messages=messages)
+            result = await Runner.run(self.agents["research"], input=messages, run_config=self.run_config)
 
             return {
                 "success": True,
                 "task_id": str(uuid4()),
-                "research_results": result.response,
-                "sources": getattr(result.response, "sources", []),
+                "research_results": result.final_output,
+                "sources": getattr(result.final_output, "sources", []),
                 "reasoning": [
                     f"Conducted web search for: {query}",
                     "Validated source credibility and relevance",
@@ -161,8 +155,6 @@ Focus on academic, educational, and research sources that would be valuable for 
     ) -> dict[str, Any]:
         """Generate flashcards using the flashcard generator agent."""
         try:
-            runner = Runner(agent=self.agents["flashcard_generator"], run_config=self.run_config)
-
             # Prepare the flashcard generation request
             prompt = f"""Generate {card_count} flashcards from document ID: {document_id}
 
@@ -183,7 +175,7 @@ The flashcards should be suitable for spaced repetition learning and help studen
 """
 
             messages = [{"role": "user", "content": prompt}]
-            await runner.run(messages=messages)
+            await Runner.run(self.agents["flashcard_generator"], input=messages, run_config=self.run_config)
 
             # Process the result to match our expected format
             flashcard_response = {
@@ -227,6 +219,141 @@ The flashcards should be suitable for spaced repetition learning and help studen
             return {
                 "success": False,
                 "error_message": f"Flashcard generation failed: {e!s}",
+                "task_id": str(uuid4()),
+            }
+
+    async def answer_query(self, query: str, user_id: str | None = None) -> dict[str, Any]:
+        """Answer student query using RAG Q&A agent with knowledge base."""
+        try:
+            # Prepare the Q&A request
+            prompt = f"""Answer this student question using only information from the uploaded study materials: "{query}"
+
+Requirements:
+- Use ONLY information from the knowledge base/uploaded documents
+- Provide clear, educational answers grounded in the retrieved content
+- Include proper citations in the format (filename, page/section)
+- If information isn't available, clearly state this
+- Focus on helping the student understand concepts from their materials
+
+Please search through the uploaded documents and provide a comprehensive answer based solely on that content.
+"""
+
+            messages = [{"role": "user", "content": prompt}]
+            result = await Runner.run(self.agents["rag_qa"], input=messages, run_config=self.run_config)
+
+            return {
+                "success": True,
+                "task_id": str(uuid4()),
+                "answer": result.final_output,
+                "reasoning": [
+                    f"Searched knowledge base for: {query}",
+                    "Retrieved relevant document sections",
+                    "Generated answer based on source materials only",
+                ],
+                "metadata": {
+                    "query": query,
+                    "user_id": user_id,
+                    "agent_used": "rag_qa",
+                    "knowledge_base_only": True,
+                    "citations_included": True,
+                },
+            }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error_message": f"Q&A failed: {e!s}",
+                "task_id": str(uuid4()),
+            }
+
+    async def run_workflow(
+        self,
+        message: str,
+        user_id: str | None = None,
+        session_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Execute the full agent workflow: classify intent -> route to appropriate agent -> execute."""
+        try:
+            task_id = str(uuid4())
+
+            # Step 1: Classify intent
+            classification_result = await self.classify_intent(message, user_id)
+
+            if not classification_result["success"]:
+                return classification_result
+
+            classification = classification_result["classification"]
+            intent = classification.get("intent", "RAG_QA").upper()
+
+            # Step 2: Route and execute based on intent
+            if intent == "RESEARCH":
+                # Extract query from the original message for research
+                research_result = await self.conduct_research(message, user_id=user_id)
+                return {
+                    "success": True,
+                    "task_id": task_id,
+                    "workflow_result": {
+                        "intent_classification": classification,
+                        "agent_executed": "research",
+                        "result": research_result,
+                        "message": message,
+                    },
+                }
+
+            elif intent == "FLASHCARD":
+                # For flashcards, we need a document_id, so provide guidance
+                return {
+                    "success": True,
+                    "task_id": task_id,
+                    "workflow_result": {
+                        "intent_classification": classification,
+                        "agent_executed": "flashcard_generator",
+                        "result": {
+                            "success": True,
+                            "message": "I can create flashcards for you! Please specify which document you'd like me to use.",
+                            "required_action": "document_selection",
+                            "next_steps": ["Upload a document or provide a document ID to generate flashcards"],
+                        },
+                        "message": message,
+                    },
+                }
+
+            elif intent == "SUMMARIZER":
+                # For summarization, we need a document_id, so provide guidance
+                return {
+                    "success": True,
+                    "task_id": task_id,
+                    "workflow_result": {
+                        "intent_classification": classification,
+                        "agent_executed": "summarizer",
+                        "result": {
+                            "success": True,
+                            "message": "I can summarize documents for you! Please specify which document you'd like me to summarize.",
+                            "required_action": "document_selection",
+                            "next_steps": ["Upload a document or provide a document ID to summarize"],
+                        },
+                        "message": message,
+                    },
+                }
+
+            else:  # RAG_QA or default
+                # Execute Q&A with knowledge base
+                qa_result = await self.answer_query(message, user_id)
+                return {
+                    "success": True,
+                    "task_id": task_id,
+                    "workflow_result": {
+                        "intent_classification": classification,
+                        "agent_executed": "rag_qa",
+                        "result": qa_result,
+                        "message": message,
+                    },
+                }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error_message": f"Workflow execution failed: {e!s}",
                 "task_id": str(uuid4()),
             }
 

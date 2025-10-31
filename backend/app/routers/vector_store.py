@@ -61,7 +61,7 @@ async def list_vector_store_files(
 
 
 @router.post("/vector-store/files")
-async def upload_file_to_vector_store(file: Annotated[UploadFile, File()] = ...) -> dict[str, Any]:
+async def upload_file_to_vector_store(file: Annotated[UploadFile, File()]) -> dict[str, Any]:
     """Upload a file to the exam assistant vector store with intelligent description generation."""
     if not file.filename:
         raise HTTPException(status_code=400, detail="File must have a filename")
@@ -103,7 +103,7 @@ async def upload_file_to_vector_store(file: Annotated[UploadFile, File()] = ...)
         local_file_path = data_dir / safe_filename
 
         # Write the file content to local storage
-        async with await anyio.open_file(local_file_path) as local_file:
+        async with await anyio.open_file(local_file_path, "wb") as local_file:
             await local_file.write(content)
 
         # Store enhanced metadata with local file path

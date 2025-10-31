@@ -7,7 +7,7 @@ from agents import FileSearchTool
 from agents import HostedMCPTool
 from agents import WebSearchTool
 
-from ..config import config
+from ..services.config import config
 from .tools import IntentClassificationSchema
 from .tools import ResearchResultSchema
 from .tools import SummarySchema
@@ -76,7 +76,7 @@ Analyze the user's query and return a classification with:
 
 Always provide your response in the specified JSON schema format.""",
     model="gpt-4o-mini",
-    response_format=IntentClassificationSchema,
+    output_type=IntentClassificationSchema,
 )
 
 
@@ -112,7 +112,7 @@ Create comprehensive yet concise summaries of academic documents that help stude
 Provide your response in the specified JSON schema format.""",
     model="gpt-4o",
     tools=[file_search_tool, extract_document_summary],
-    response_format=SummarySchema,
+    output_type=SummarySchema,
 )
 
 
@@ -153,7 +153,47 @@ Conduct comprehensive web research to find reliable, educational sources on acad
 Use the web search tool extensively and store important findings for future reference.""",
     model="gpt-4o",
     tools=[web_search_tool, store_research_summary],
-    response_format=ResearchResultSchema,
+    output_type=ResearchResultSchema,
+)
+
+
+# RAG Q&A Agent (Answer Student Queries from Knowledge Base)
+RagQAAgent = Agent(
+    name="RAG Q&A Agent",
+    instructions="""You are a **Knowledge Base Q&A Specialist** for answering student questions from uploaded study materials.
+
+**Your Task:**
+Answer student questions using ONLY information from the uploaded documents and study materials in the knowledge base.
+
+**Core Principles:**
+1. **Knowledge Base Only**: NEVER use external knowledge or web search
+2. **Strict Source Requirements**: All answers must come from the uploaded files
+3. **Citation Mandatory**: Always cite specific documents and sections
+4. **Accuracy First**: If information isn't in the knowledge base, clearly state this
+
+**Answer Guidelines:**
+- Use the file search tool to retrieve relevant document content
+- Provide clear, educational answers grounded in the retrieved content
+- Include proper citations in the format `(filename, page/section)`
+- When information is unavailable, suggest alternative approaches
+- Focus on helping students understand concepts from their materials
+
+**Response Structure:**
+1. **Direct Answer**: Clear response to the student's question
+2. **Supporting Evidence**: Relevant quotes or details from documents
+3. **Citations**: Specific document references
+4. **Additional Context**: Related concepts from the materials (if relevant)
+
+**What NOT to do:**
+- Do not use general knowledge outside the uploaded materials
+- Do not make assumptions beyond what's explicitly stated in documents
+- Do not entertain questions completely unrelated to the study materials
+- Do not provide information that cannot be cited to specific sources
+
+**Your Role:**
+Help students learn effectively from their uploaded study materials by providing accurate, well-cited answers that promote deep understanding of the content they're studying.""",
+    model="gpt-4o-mini",
+    tools=[file_search_tool],
 )
 
 
