@@ -1,18 +1,15 @@
-# Knowledge Assistant Demo
-
-Ground every answer with citations using a ChatKit-powered knowledge workflow. This example combines a FastAPI backend that queries an OpenAI File Search vector store with a React UI that highlights the documents referenced in each response.
+# Exam Preparation Agent Workshop
 
 ## What's Inside
-- FastAPI service that streams grounded answers from an OpenAI Agent plus document citations.
-- ChatKit Web Component wrapped in React with a document panel and inline citation highlighting.
-- Vector-store tooling for ingesting policy documents and exposing REST endpoints for previews.
+- FastAPI service that is backed by OpenAI Agents.
+- ChatKit Web Component wrapped in React with a document panel.
+- Vector-store tooling for ingesting documents and exposing REST endpoints for previews, uploads.
 
 ## Prerequisites
 - Python 3.11+
-- Node.js 20+
-- [uv](https://docs.astral.sh/uv/getting-started/installation/) (recommended) or `pip`
+- Node.js 22+
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) (recommended)
 - OpenAI API key exported as `OPENAI_API_KEY`
-- ChatKit domain key exported as `VITE_EXAM_PREP_CHATKIT_API_DOMAIN_KEY` (use any non-empty placeholder locally; replace with the real key in production)
 - Vector store ID exported as `EXAM_PREP_VECTOR_STORE_ID` (see below)
 
 ## Quickstart Overview
@@ -22,69 +19,24 @@ Ground every answer with citations using a ChatKit-powered knowledge workflow. T
 
 Each step is detailed below.
 
-### 1. Start the FastAPI backend
+## Steps to Run:
+#### Start the FastAPI backend
+1. Setup environment
+   - Copy the template environment file into your own `.env` file: `cp .env.template .env`
+2. Create or reuse a vector store:
+   - Visit [OpenAI Vector Stores](https://platform.openai.com/storage/vector_stores) and create a vector store, or, Use existing vector store
+   - Copy the Vector Store ID (e.g. `vs_abc123`) and set in your `.env` file, alongside your OpenAI API Key
 
-The backend lives in `examples/exam-prep-assistant/backend` and includes its own `pyproject.toml`.
+3. Install dependencies and launch the API: `npm run backend`
 
-1. Create or reuse a vector store:
-   - Visit [OpenAI Vector Stores](https://platform.openai.com/storage/vector_stores).
-   - Upload the reference documents and copy the store ID (e.g. `vs_abc123`).
-   - Export the ID so the agent can perform grounded search:
-     ```bash
-     export EXAM_PREP_VECTOR_STORE_ID=vs_...
-     ```
+#### Anki Setup
+1. [Download Anki](https://apps.ankiweb.net/#downloads) for your OS, and install it.
+2. Open Anki, and finish the one-time setup. 
+3. Go to Tools (in menu bar) > Add ons > Install code 2055492159 to get AnkiConnect
+4. Restart Anki
+5. `npm run ankimcp`
 
-2. Install dependencies and launch the API:
-   ```bash
-   cd examples/exam-prep-assistant/backend
-   uv sync
 
-   # Option 1: Use .env file (recommended)
-   cp .env.template .env
-   # Edit .env file with your actual values
-
-   # Option 2: Export variables directly
-   export OPENAI_API_KEY="sk-proj-..."
-   export EXAM_PREP_VECTOR_STORE_ID="vs_..."
-
-   uv run uvicorn app.main:app --reload --port 8002
-   ```
-
-   The API exposes ChatKit at `http://127.0.0.1:8002/knowledge/chatkit` and document helpers under `/knowledge/*` (documents, files, citations, health). If your shell cannot locate the local `app` package, set `PYTHONPATH=$(pwd)` before running Uvicorn.
-
-### 2. Run the React frontend
-
-```bash
-cd examples/exam-prep-assistant/frontend
-npm install
-npm run dev
-```
-
-The dev server runs at `http://127.0.0.1:5172` and proxies `/knowledge` calls to the API, which is sufficient for local iteration.
-
-From the `examples/exam-prep-assistant` directory you can also run `npm start` to launch the backend (`uv sync` + Uvicorn) and frontend together. Ensure `uv` is installed and required environment variables (such as `OPENAI_API_KEY`, `EXAM_PREP_VECTOR_STORE_ID`, and the domain key) are exported before using this shortcut.
-
-Regarding the domain public key, you can use any string during local development. However, for production deployments:
-
-1. Host the frontend on infrastructure you control behind a managed domain.
-2. Register that domain on the [domain allowlist page](https://platform.openai.com/settings/organization/security/domain-allowlist) and add it to `examples/exam-prep-assistant/frontend/vite.config.ts` under `server.allowedHosts`.
-3. Set `VITE_EXAM_PREP_CHATKIT_API_DOMAIN_KEY` to the key returned by the allowlist page and confirm `examples/exam-prep-assistant/frontend/src/lib/config.ts` reflects any env overrides you expect (API URLs, prompt text, etc.).
-
-To rehearse remote-access flows before launch, expose the app temporarily with a tunnel—e.g. `ngrok http 5172` or `cloudflared tunnel --url http://localhost:5172`—and allowlist that hostname before testing.
-
-### 3. Try the workflow
-
-Open the printed URL and ask grounded questions such as:
-
-- `Summarise the September 17, 2025 policy decision with citations.`
-- `What does the August 2025 CPI release highlight?`
-- `Compare the growth and inflation projections from the latest SEP.`
-
-Each response streams with inline citations; the document grid highlights referenced files, and you can click a tile to preview the source.
-
-### Customize the demo
-
-- **Vector store**: Point `EXAM_PREP_VECTOR_STORE_ID` to a different store to change the knowledge base.
-- **Document manifest**: Edit `examples/exam-prep-assistant/backend/app/documents.py` to rename or hide files in the grid.
-- **Frontend config**: Override default endpoints with `VITE_KNOWLEDGE_*` variables or adjust behavior in `frontend/src/lib/config.ts`.
-- **Port and proxy**: Update `frontend/vite.config.ts` if you need different ports or additional allowed hosts.
+#### Start the React Frontend
+1. Use `nvm` OR ensure Node V22+: `nvm use v22`
+2. Launch frontend server: `npm run frontend`
