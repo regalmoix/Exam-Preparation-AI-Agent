@@ -1,10 +1,12 @@
-fastapi<0.116,>=0.114.1
-httpx<0.29,>=0.28
-uvicorn[standard]<0.37,>=0.36
-openai>=1.40
-openai-chatkit<2,>=1.0.2
-python-dotenv>=1.0.0
+fastapi
+httpx
+uvicorn[standard]
+openai
+openai-chatkit
+python-dotenv
 pre-commit
+pytest
+pytest-asyncio
 
 [dev]
 ruff

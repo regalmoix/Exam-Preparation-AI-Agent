@@ -26,7 +26,7 @@ class DocumentMetadata:
 class DocumentMetadataStore:
     """Simple file-based storage for document metadata."""
 
-    def __init__(self, storage_path: str = "data/document_metadata.json"):
+    def __init__(self, storage_path: str = "../data/document_metadata.json"):
         """Initialize the metadata store."""
         self.storage_path = Path(storage_path)
         self.storage_path.parent.mkdir(exist_ok=True)

@@ -1,8 +1,0 @@
-This is a test document for upload debugging.
-
-# Test Content  
-- Item 1: Basic text content
-- Item 2: Some more test data  
-- Item 3: File upload validation
-
-This file should be successfully uploaded to the vector store.

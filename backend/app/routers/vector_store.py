@@ -95,7 +95,7 @@ async def upload_file_to_vector_store(file: Annotated[UploadFile, File()]) -> di
         title = file_path.stem  # Filename without extension
 
         # Save local copy to data directory
-        data_dir = Path("data/uploaded_files")
+        data_dir = Path("../data/uploaded_files")
         data_dir.mkdir(parents=True, exist_ok=True)
 
         # Create safe filename using file ID to avoid conflicts
