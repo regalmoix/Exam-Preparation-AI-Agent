@@ -3,44 +3,22 @@
 from __future__ import annotations
 
 from agents import Agent
-from agents import FileSearchTool
-from agents import HostedMCPTool
-from agents import WebSearchTool
 
 from ..services.config import config
-from .tools import IntentClassificationSchema
-from .tools import ResearchResultSchema
-from .tools import SummarySchema
+from .models import IntentClassificationSchema
+from .models import ResearchResultSchema
+from .models import SummarySchema
+from .tools import anki_mcp_tool
 from .tools import create_flashcard_deck
 from .tools import extract_document_summary
+from .tools import file_search_tool
 from .tools import store_research_summary
+from .tools import web_search_tool
 
 
 # Initialize shared tools
-file_search_tool = FileSearchTool(vector_store_ids=[config.exam_prep_vector_store_id], max_num_results=10)
-
-web_search_tool = WebSearchTool(search_context_size="high", user_location={"country": "US", "type": "approximate"})
 
 # MCP Anki integration
-anki_mcp_tool = HostedMCPTool(
-    tool_config={
-        "type": "mcp",
-        "server_label": "anki_mcp_server",
-        "server_url": "http://localhost:8765",
-        "server_description": "Anki MCP Server for flashcard management",
-        "allowed_tools": [
-            "sync",
-            "list_decks",
-            "create_deck",
-            "addNote",
-            "findNotes",
-            "notesInfo",
-            "updateNoteFields",
-            "deleteNotes",
-        ],
-        "require_approval": "always",
-    }
-)
 
 
 # Intent Classification Agent
@@ -75,7 +53,7 @@ Analyze the user's query and return a classification with:
 4. Clear reasoning for the classification
 
 Always provide your response in the specified JSON schema format.""",
-    model="gpt-4o-mini",
+    model=config.openai_model,
     output_type=IntentClassificationSchema,
 )
 
@@ -110,7 +88,7 @@ Create comprehensive yet concise summaries of academic documents that help stude
 4. Ensure all citations are properly formatted
 
 Provide your response in the specified JSON schema format.""",
-    model="gpt-4o",
+    model=config.openai_model,
     tools=[file_search_tool, extract_document_summary],
     output_type=SummarySchema,
 )
@@ -151,7 +129,7 @@ Conduct comprehensive web research to find reliable, educational sources on acad
 - Provide clear source attribution
 
 Use the web search tool extensively and store important findings for future reference.""",
-    model="gpt-4o",
+    model=config.openai_model,
     tools=[web_search_tool, store_research_summary],
     output_type=ResearchResultSchema,
 )
@@ -192,7 +170,7 @@ Answer student questions using ONLY information from the uploaded documents and 
 
 **Your Role:**
 Help students learn effectively from their uploaded study materials by providing accurate, well-cited answers that promote deep understanding of the content they're studying.""",
-    model="gpt-4o-mini",
+    model=config.openai_model,
     tools=[file_search_tool],
 )
 
@@ -244,7 +222,7 @@ Generate diverse, high-quality flashcards from study materials that promote acti
 - Provide proper deck organization and tagging
 
 Generate flashcards that promote effective learning through active recall and spaced repetition principles.""",
-    model="gpt-4o",
+    model=config.openai_model,
     tools=[file_search_tool, create_flashcard_deck, anki_mcp_tool],
     # Note: For flashcards, we'll return a custom response format in the runner
 )

@@ -4,9 +4,11 @@ from __future__ import annotations
 
 from typing import Any
 
+from agents import FileSearchTool
+from agents import HostedMCPTool
+from agents import WebSearchTool
 from agents import function_tool
-from pydantic import BaseModel
-from pydantic import Field
+from backend.app.services.config import config
 
 
 # Custom function tools for study assistant
@@ -49,71 +51,44 @@ def extract_document_summary(document_content: str, focus_areas: list[str]) -> d
     }
 
 
-class EntitySchema(BaseModel):
-    """Schema for extracted entities."""
-
-    action: str
-
-
-class IntentClassificationSchema(BaseModel):
-    """Schema for intent classification responses."""
-
-    intent: str
-    confidence: float
-    entities: EntitySchema
-    reasoning: str
-
-
-class CitationSchema(BaseModel):
-    """Schema for citations."""
-
-    text: str
-    page: int
-    section: str
-
-
-class SummarySchema(BaseModel):
-    """Schema for document summaries."""
-
-    main_topic: str
-    key_concepts: list[str]
-    study_notes: list[str]
-    citations: list[CitationSchema]
-    summary: str
-
-
-class SourceSchema(BaseModel):
-    """Schema for research sources."""
-
-    title: str
-    url: str
-    credibility_score: int
-    relevance_score: int
-    excerpt: str
-    publication_date: str
-    source_type: str
-
-
-class ResearchResultSchema(BaseModel):
-    """Schema for research results."""
-
-    research_query: str
-    synthesis: str
-    key_findings: list[str]
-    sources: list[SourceSchema]
-    recommendations: list[str]
-
-
-class FlashcardSchema(BaseModel):
-    """Schema for individual flashcards."""
-
-    id: str
-    type: str  # basic, cloze, multiple_choice
-    front: str = Field(default="")
-    back: str = Field(default="")
-    text: str = Field(default="")  # For cloze cards
-    question: str = Field(default="")  # For multiple choice
-    choices: list[str] = Field(default_factory=list)
-    correct_answer: int = Field(default=0)
-    tags: list[str]
-    difficulty: str
+file_search_tool = FileSearchTool(vector_store_ids=[config.exam_prep_vector_store_id], max_num_results=3)
+web_search_tool = WebSearchTool(search_context_size="high", user_location={"country": "US", "type": "approximate"})
+anki_mcp_tool = HostedMCPTool(
+    tool_config={
+        "type": "mcp",
+        "server_label": "anki_mcp_server",
+        "server_url": "http://localhost:8765",
+        "server_description": "Anki MCP Server for flashcard management",
+        "allowed_tools": [
+            "sync",
+            "list_decks",
+            "create_deck",
+            "get_due_cards",
+            "present_card",
+            "rate_card",
+            "modelNames",
+            "modelFieldNames",
+            "modelStyling",
+            "createModel",
+            "updateModelStyling",
+            "addNote",
+            "findNotes",
+            "notesInfo",
+            "updateNoteFields",
+            "deleteNotes",
+            "mediaActions",
+            "guiBrowse",
+            "guiSelectCard",
+            "guiSelectedNotes",
+            "guiAddCards",
+            "guiEditNote",
+            "guiDeckOverview",
+            "guiDeckBrowser",
+            "guiCurrentCard",
+            "guiShowQuestion",
+            "guiShowAnswer",
+            "guiUndo",
+        ],
+        "require_approval": "always",
+    }
+)

@@ -9,6 +9,7 @@ from agents import ModelSettings
 from agents import RunConfig
 from agents import Runner
 
+from ..services.config import config
 from .agents import FlashcardGeneratorAgent
 from .agents import IntentClassifierAgent
 from .agents import RagQAAgent
@@ -30,7 +31,7 @@ class StudyAgentRunner:
         }
 
         # Default model settings
-        self.model_settings = ModelSettings(model="gpt-4o-mini", temperature=0.1, max_tokens=2000)
+        self.model_settings = ModelSettings(model=config.openai_model, temperature=0.1, max_tokens=2000)
 
         # Default run configuration
         self.run_config = RunConfig(
@@ -50,7 +51,7 @@ class StudyAgentRunner:
                 "task_id": str(uuid4()),
                 "classification": result.final_output,
                 "reasoning": [f"Analyzed query: {query}"],
-                "metadata": {"user_id": user_id, "agent_used": "intent_classifier", "model": "gpt-4o-mini"},
+                "metadata": {"user_id": user_id, "agent_used": "intent_classifier", "model": config.openai_model},
             }
 
         except Exception as e:

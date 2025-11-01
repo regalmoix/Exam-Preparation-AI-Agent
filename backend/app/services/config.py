@@ -18,6 +18,7 @@ class Config:
 
         # Required environment variables
         self.openai_api_key = self._get_required_env("OPENAI_API_KEY")
+        self.openai_model = self._get_required_env("OPENAI_GPT_MODEL")
         self.exam_prep_vector_store_id = self._get_required_env("EXAM_PREP_VECTOR_STORE_ID")
 
         # Optional environment variables with defaults
@@ -41,6 +42,7 @@ class Config:
     def validate(self) -> bool:
         try:
             self._get_required_env("OPENAI_API_KEY")
+            self._get_required_env("OPENAI_GPT_MODEL")
             self._get_required_env("EXAM_PREP_VECTOR_STORE_ID")
             return True
         except RuntimeError:
