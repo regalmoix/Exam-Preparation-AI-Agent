@@ -4,7 +4,8 @@ target-version = "py311"
 # Add paths to include for formatting/linting here. For linting please also modify `lint.per-file-ignores` section.
 # Paths added to `include` and not `lint.per-file-ignores` will be formatted, not linted.
 include = [
-    "app/**/*.py",
+    "backend/app/**/*.py",
+    "examples/**.py"
 ]
 
 [format]
@@ -18,7 +19,7 @@ select = [
 #    TODO: Uncomment the following when the codebase is ready...
 #   "RET", "SLF", "SIM", "ARG"
 ]
-ignore = ["E501", "B904", "S301", "S608", "S311", "PLR09", "PLR2004", "RUF005", "RUF012"]
+ignore = ["E501", "B904", "S301", "S608", "S311", "PLR09", "PLR2004", "RUF005", "RUF012", "S101"]
 fixable = ["ALL"]
 
 

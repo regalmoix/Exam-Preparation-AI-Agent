@@ -10,8 +10,9 @@ from agents import TResponseInputItem
 from agents import WebSearchTool
 from agents import function_tool
 from agents import trace
-from backend.app.services.config import config
 from pydantic import BaseModel
+
+from backend.app.services.config import config
 
 
 # Tool definitions
