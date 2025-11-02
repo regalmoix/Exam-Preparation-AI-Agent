@@ -9,7 +9,6 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 
 from ..agents_sdk import StudyAgentRunner
-from ..services.config import config
 
 
 router = APIRouter()
@@ -87,7 +86,7 @@ async def summarize_document(request: SummarizeRequest) -> dict[str, Any]:
             "sdk_info": {
                 "agent_used": "SummarizerAgent with FileSearchTool",
                 "tools": ["FileSearchTool", "extract_document_summary"],
-                "model": config.openai_model,
+                "model": "gpt-4o-mini",
                 "response_format": "SummarySchema",
             },
         }
@@ -148,7 +147,7 @@ async def classify_user_intent(request: IntentClassificationRequest) -> dict[str
             },
             "sdk_info": {
                 "agent_used": "IntentClassifierAgent",
-                "model": config.openai_model,
+                "model": "gpt-4o-mini",
                 "response_format": "IntentClassificationSchema",
                 "temperature": 0.1,
             },
@@ -221,7 +220,7 @@ async def conduct_research(request: ResearchRequest) -> dict[str, Any]:
             "sdk_info": {
                 "agent_used": "ResearchAgent with WebSearchTool",
                 "tools": ["WebSearchTool", "store_research_summary"],
-                "model": config.openai_model,
+                "model": "gpt-4o-mini",
                 "search_context": "high",
                 "response_format": "ResearchResultSchema",
             },
@@ -294,7 +293,7 @@ async def generate_flashcards(request: FlashcardRequest) -> dict[str, Any]:
                 "tools": ["FileSearchTool", "HostedMCPTool", "create_flashcard_deck"],
                 "mcp_server": "anki_mcp_server",
                 "mcp_url": "http://localhost:8765",
-                "model": config.openai_model,
+                "model": "gpt-4o-mini",
             },
         }
 

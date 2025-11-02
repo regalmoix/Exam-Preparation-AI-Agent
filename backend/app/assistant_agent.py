@@ -52,7 +52,6 @@ def build_file_search_tool() -> FileSearchTool:
 
 
 assistant_agent = Agent[AgentContext](
-    model=config.openai_model,
     name="AI Exam Preparation Assistant",
     instructions=EXAM_PREP_ASSISTANT_INSTRUCTIONS,
     tools=[build_file_search_tool()],

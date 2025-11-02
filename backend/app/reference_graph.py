@@ -12,8 +12,6 @@ from agents import function_tool
 from agents import trace
 from pydantic import BaseModel
 
-from backend.app.services.config import config
-
 
 # Tool definitions
 @function_tool
@@ -73,7 +71,6 @@ intent_classifier_agent = Agent(
     instructions="""You are the entry point intent classifier node of a helpful Study Assistant that assists student with summarising, studying, asking questions and testing the student, verifying student response against knowledge base, and searching knowledge base for asking question to student
 
 You are tasked with classifying user's intent into one of: research_intent, flash_card_intent,  answer_query_intent""",
-    model=config.openai_model,
     output_type=IntentClassifierAgentSchema,
     model_settings=ModelSettings(temperature=1, top_p=1, max_tokens=2048, store=True),
 )
@@ -88,7 +85,6 @@ store_and_upload_research_summary: call this tool ALWAYS. this will be used to s
 Step 2:
 Output a very detailed summary in markdown format with sources cited in text and at the end. The output should look like student notes that help with exam prep.
 """,
-    model=config.openai_model,
     tools=[store_and_upload_research_summary, web_search_preview],
     model_settings=ModelSettings(temperature=1, top_p=1, parallel_tool_calls=True, max_tokens=2048, store=True),
 )
@@ -99,7 +95,6 @@ answer_student_query = Agent(
     instructions="""You are a node in a Exam Study Prep Agent.
 Your task is to find information regarding the topic student is researching, from the knowledge base strictly. Do NOT use web search and DO NOT use your own knowledge to answer. Anything you answer must be from the files you have, and cite your sources as well.
 Do not entertain random out-of-knowledge-base questions. """,
-    model=config.openai_model,
     tools=[file_search],
     model_settings=ModelSettings(temperature=1, top_p=1, max_tokens=2048, store=True),
 )
@@ -108,7 +103,6 @@ Do not entertain random out-of-knowledge-base questions. """,
 flashcards_agent = Agent(
     name="Flashcards Agent",
     instructions="This is a placeholder for MCP Agent for Anki ",
-    model=config.openai_model,
     tools=[mcp],
     model_settings=ModelSettings(temperature=1, top_p=1, max_tokens=2048, store=True),
 )
