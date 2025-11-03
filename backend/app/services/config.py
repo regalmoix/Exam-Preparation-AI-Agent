@@ -21,6 +21,7 @@ class Config:
         self.exam_prep_vector_store_id = self._get_required_env("EXAM_PREP_VECTOR_STORE_ID")
 
         # Optional environment variables with defaults
+        self.debug = os.getenv("DEBUG") not in (None, "0", "false", 0, False, "False")
         self.api_host = os.getenv("API_HOST", "127.0.0.1")
         self.api_port = int(os.getenv("API_PORT", "8002"))
 

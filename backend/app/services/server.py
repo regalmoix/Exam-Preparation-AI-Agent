@@ -8,6 +8,7 @@ from typing import Any
 from agents import Agent
 from agents import RunConfig
 from agents import Runner
+from agents import enable_verbose_stdout_logging
 from agents.model_settings import ModelSettings
 from chatkit.agents import AgentContext
 from chatkit.agents import stream_agent_response
@@ -21,7 +22,12 @@ from chatkit.types import UserMessageItem
 from openai.types.responses import ResponseInputContentParam
 
 from ..assistant_agent import assistant_agent
+from .config import config
 from .memory_store import MemoryStore
+
+
+if config.debug:
+    enable_verbose_stdout_logging()
 
 
 def _user_message_text(item: UserMessageItem) -> str:

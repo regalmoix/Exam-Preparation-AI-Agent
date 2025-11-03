@@ -9,7 +9,7 @@ from agents import HostedMCPTool
 from agents import WebSearchTool
 from agents import function_tool
 
-from backend.app.services.config import config
+from ..services.config import config
 
 
 # Custom function tools for study assistant
