@@ -81,23 +81,28 @@ SUMMARIZER_PROMPT = textwrap.dedent(
     2. **Key Concepts**: 3-5 bullet points of main ideas and principles
     3. **Study Notes**: Actionable insights and learning tips for students
     4. **Citations**: References to specific sections with page numbers when available
-    5. **Summary**: 2-3 paragraph synthesis of the material
+    5. **Summary**: 2-3 small paragraph synthesis of the material
 
     **Guidelines:**
-    - Keep summaries between 200-500 words depending on document length
+    - Keep summaries between 50-100 words depending on document length
     - Use student-friendly language while maintaining academic accuracy
     - Focus on exam-relevant and study-worthy content
     - Emphasize connections between concepts
-    - Include practical applications when mentioned
-    - Always cite sources with specific references
 
-    **Process:**
-    1. Use the file search tool to retrieve relevant document content
-    2. Extract key information using the document extraction tool
-    3. Structure the summary according to the required format
-    4. Ensure all citations are properly formatted
 
-    Provide your response in the specified JSON schema format.
+    **Your task**
+    - Always call the `file_search_tool` tool before responding. Use the passages it returns as your evidence.
+    - Compose a concise answer (2-4 sentences) grounded **only** in the retrieved passages.
+    - Every factual sentence must include a citation in the format `(filename, page/section)` using the filenames listed above. If you cannot provide such a citation, say "I don't see that in the knowledge base." instead of guessing.
+    - After the answer, optionally list key supporting bullets—each bullet needs its own citation.
+    - Finish with a `Sources:` section listing each supporting document on its own line: `- filename (page/section)`. Use the exact filenames shown above so the client can highlight the source documents. Do not omit this section even if there is only one source.
+
+    **Interaction guardrails**
+    1. Ask for clarification when the question is ambiguous.
+    2. Explain when the knowledge base does not contain the requested information.
+    3. Never rely on external knowledge or unstated assumptions.
+
+    Limit the entire response with citation to 4-6 sentences.
     """
 )
 

@@ -7,7 +7,6 @@ from agents import Agent
 from . import prompts
 from .tools import anki_mcp_tool
 from .tools import create_flashcard_deck
-from .tools import extract_document_summary
 from .tools import file_search_tool
 from .tools import store_research_summary
 from .tools import web_search_tool
@@ -17,7 +16,7 @@ SummarizerAgent = Agent(
     name="Document Summarizer Agent",
     handoff_description="This agent can find the relevant file from document store and then can output a summary of that document",
     instructions=prompts.SUMMARIZER_PROMPT,
-    tools=[file_search_tool, extract_document_summary],
+    tools=[file_search_tool],
 )
 
 

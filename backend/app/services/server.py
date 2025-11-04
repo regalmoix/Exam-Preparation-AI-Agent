@@ -21,7 +21,7 @@ from chatkit.types import ThreadStreamEvent
 from chatkit.types import UserMessageItem
 from openai.types.responses import ResponseInputContentParam
 
-from ..agents_sdk.agents import TriageAgent
+from ..agents_sdk import SummarizerAgent
 from .config import config
 from .memory_store import MemoryStore
 
@@ -90,7 +90,7 @@ class ExamPrepAssistantServer(ChatKitServer[dict[str, Any]]):
 
 
 # Global server instance
-exam_prep_server = ExamPrepAssistantServer(agent=TriageAgent)
+exam_prep_server = ExamPrepAssistantServer(agent=SummarizerAgent)
 
 
 def get_server() -> ExamPrepAssistantServer:
