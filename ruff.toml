@@ -1,8 +1,6 @@
 line-length = 120
 target-version = "py311"
 
-# Add paths to include for formatting/linting here. For linting please also modify `lint.per-file-ignores` section.
-# Paths added to `include` and not `lint.per-file-ignores` will be formatted, not linted.
 include = [
     "backend/app/**/*.py",
     "examples/**.py"
@@ -16,10 +14,8 @@ exclude = []
 select = [
     "E", "F", "I", "W", "UP", "YTT", "ASYNC", "S", "B", "A", "FA", "PL", "FURB", "RUF", "PERF", "FAST",
     "ASYNC", "C4", "T10", "ISC", "ICN", "G", "INP", "SLOT", "PIE",
-#    TODO: Uncomment the following when the codebase is ready...
-#   "RET", "SLF", "SIM", "ARG"
 ]
-ignore = ["E501", "B904", "S301", "S608", "S311", "PLR09", "PLR2004", "RUF005", "RUF012", "S101"]
+ignore = ["E501", "B904", "S301", "S608", "S311", "PLR09", "PLR2004", "PLC0415", "RUF005", "RUF012", "S101", "G004", "E402"]
 fixable = ["ALL"]
 
 

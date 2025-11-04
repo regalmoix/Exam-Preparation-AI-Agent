@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import mimetypes
 import time
 from dataclasses import dataclass
@@ -17,6 +18,9 @@ from ..models.document_metadata import DocumentMetadata
 from ..models.document_metadata import metadata_store
 from .config import config
 from .document_summarizer import document_summarizer
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,15 +80,21 @@ class VectorStoreService:
 
     def __init__(self):
         """Initialize the vector store service."""
+        logger.info("Initializing VectorStoreService")
         self.client = OpenAI(api_key=config.openai_api_key)
         self.vector_store_id = config.exam_prep_vector_store_id
+        logger.debug(f"Vector store service initialized with store ID: {self.vector_store_id}")
 
     async def get_vector_store_info(self) -> VectorStoreInfo:
         """Get information about the configured vector store."""
+        logger.debug("Retrieving vector store info")
         try:
             response = self.client.vector_stores.retrieve(self.vector_store_id)
-            return VectorStoreInfo.from_openai_response(response.model_dump())
+            info = VectorStoreInfo.from_openai_response(response.model_dump())
+            logger.debug(f"Vector store info retrieved: {info.file_counts} files")
+            return info
         except Exception as e:
+            logger.error(f"Failed to retrieve vector store info: {e}")
             raise RuntimeError(f"Failed to retrieve vector store info: {e!s}") from e
 
     async def list_vector_store_files(
@@ -95,6 +105,7 @@ class VectorStoreService:
         before: str | None = None,
     ) -> list[VectorStoreFile]:
         """List files in the vector store."""
+        logger.debug(f"Listing vector store files: limit={limit}, order={order}")
         try:
             response = self.client.vector_stores.files.list(
                 vector_store_id=self.vector_store_id,
@@ -116,8 +127,11 @@ class VectorStoreService:
                     object=getattr(file, "object", "vector_store.file"),
                 )
                 files.append(vector_file)
+
+            logger.debug(f"Retrieved {len(files)} files from vector store")
             return files
         except Exception as e:
+            logger.error(f"Failed to list vector store files: {e}")
             raise RuntimeError(f"Failed to list vector store files: {e!s}") from e
 
     async def upload_file_to_vector_store(
@@ -219,14 +233,17 @@ class VectorStoreService:
         filename: str,
         file_extension: str,
     ):
+        logger.info(f"Adding file to vector store: {filename} ({len(file_content)} bytes)")
         file_obj = BytesIO(file_content)
 
         uploaded_file = await self.upload_file_to_vector_store(file=file_obj, filename=filename)
 
         try:
+            logger.debug(f"Generating description for {filename}")
             description = await document_summarizer.generate_description(file_content, filename)
+            logger.debug(f"Generated description for {filename}: {description[:100]}...")
         except Exception as e:
-            print(f"Failed to generate description for {filename}: {e}")
+            logger.warning(f"Failed to generate description for {filename}: {e}")
             description = f"Study document ({len(file_content)} bytes)"
 
         file_path = Path(filename)
@@ -237,6 +254,8 @@ class VectorStoreService:
 
         safe_filename = f"{uploaded_file.id}_{filename}"
         local_file_path = data_dir / safe_filename
+        logger.debug(f"Saving local copy to: {local_file_path}")
+
         async with await anyio.open_file(local_file_path, "wb") as local_file:
             await local_file.write(file_content)
 
@@ -251,6 +270,7 @@ class VectorStoreService:
             local_file_path=str(local_file_path),
         )
         metadata_store.store_metadata(metadata)
+        logger.info(f"File successfully added to vector store: {uploaded_file.id}")
 
         return {
             "message": "File uploaded successfully",

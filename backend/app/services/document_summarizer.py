@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from openai import AsyncOpenAI
@@ -9,29 +10,39 @@ from openai import AsyncOpenAI
 from .config import config
 
 
+logger = logging.getLogger(__name__)
+
+
 class DocumentSummarizer:
     """Service for generating intelligent summaries and descriptions of uploaded documents."""
 
     def __init__(self):
         """Initialize the document summarizer."""
+        logger.info("Initializing DocumentSummarizer")
         self.client = AsyncOpenAI(api_key=config.openai_api_key)
 
     async def generate_description(self, file_content: bytes, filename: str) -> str:
         """Generate a concise 1-2 line description of the document content."""
+        logger.debug(f"Generating description for document: {filename}")
+
         try:
             # Try to decode the content as text
             try:
                 text_content = file_content.decode("utf-8")
+                logger.debug(f"Successfully decoded {filename} as UTF-8 text")
             except UnicodeDecodeError:
+                logger.debug(f"Failed to decode {filename} as UTF-8, using fallback description")
                 # For non-text files, use filename-based description
                 return self._generate_fallback_description(filename)
 
             # Limit content size for API efficiency
             max_content_size = 4000  # Conservative limit for API calls
             if len(text_content) > max_content_size:
+                logger.debug(f"Truncating content for {filename}: {len(text_content)} -> {max_content_size} chars")
                 text_content = text_content[:max_content_size] + "..."
 
             # Generate description using OpenAI
+            logger.debug(f"Calling OpenAI API to generate description for {filename}")
             response = await self.client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
@@ -62,14 +73,16 @@ Keep it under 100 characters and make it useful for study organization.""",
             if len(description) > 200:  # Ensure reasonable length
                 description = description[:197] + "..."
 
+            logger.debug(f"Generated description for {filename}: {description}")
             return description or self._generate_fallback_description(filename)
 
         except Exception as e:
-            print(f"Error generating description for {filename}: {e}")
+            logger.error(f"Error generating description for {filename}: {e}")
             return self._generate_fallback_description(filename)
 
     def _generate_fallback_description(self, filename: str) -> str:
         """Generate a fallback description based on filename and extension."""
+        logger.debug(f"Generating fallback description for {filename}")
 
         file_path = Path(filename)
         extension = file_path.suffix.lower()
@@ -89,17 +102,20 @@ Keep it under 100 characters and make it useful for study organization.""",
 
         # Try to extract meaningful info from filename
         if any(keyword in name_part.lower() for keyword in ["notes", "note"]):
-            return f"Study notes - {type_desc}"
+            description = f"Study notes - {type_desc}"
         elif any(keyword in name_part.lower() for keyword in ["lecture", "slides"]):
-            return f"Lecture material - {type_desc}"
+            description = f"Lecture material - {type_desc}"
         elif any(keyword in name_part.lower() for keyword in ["textbook", "book", "chapter"]):
-            return f"Textbook content - {type_desc}"
+            description = f"Textbook content - {type_desc}"
         elif any(keyword in name_part.lower() for keyword in ["assignment", "homework", "hw"]):
-            return f"Assignment material - {type_desc}"
+            description = f"Assignment material - {type_desc}"
         elif any(keyword in name_part.lower() for keyword in ["exam", "test", "quiz"]):
-            return f"Exam preparation - {type_desc}"
+            description = f"Exam preparation - {type_desc}"
         else:
-            return f"{type_desc} for study reference"
+            description = f"{type_desc} for study reference"
+
+        logger.debug(f"Generated fallback description for {filename}: {description}")
+        return description
 
 
 # Global instance

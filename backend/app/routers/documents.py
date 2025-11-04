@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import mimetypes
 from pathlib import Path
 from typing import Any
@@ -15,14 +16,20 @@ from ..models.document_metadata import metadata_store
 from ..services.vector_store_service import vector_store_service
 
 
+logger = logging.getLogger(__name__)
+
+
 router = APIRouter()
 
 
 @router.get("/documents")
 async def list_documents() -> dict[str, Any]:
     """List all available documents in the exam assistant study materials from vector store."""
+    logger.info("Listing documents from vector store")
+
     try:
         files = await vector_store_service.list_vector_store_files(limit=100)
+        logger.debug(f"Retrieved {len(files)} files from vector store")
 
         documents = []
         for file in files:
@@ -84,14 +91,18 @@ async def list_documents() -> dict[str, Any]:
                     }
                 )
 
+        logger.info(f"Successfully listed {len(documents)} documents")
         return {"documents": documents}
     except RuntimeError as exc:
+        logger.error(f"Error listing documents: {exc}")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.get("/documents/{document_id}")
 async def get_document_info(document_id: str) -> dict[str, Any]:
     """Get information about a specific document in the vector store."""
+    logger.info(f"Getting document info for ID: {document_id}")
+
     try:
         file_info = await vector_store_service.get_file_info(document_id)
 
@@ -150,13 +161,17 @@ async def get_document_info(document_id: str) -> dict[str, Any]:
             }
     except RuntimeError as exc:
         if "not found" in str(exc).lower():
+            logger.warning(f"Document not found: {document_id}")
             raise HTTPException(status_code=404, detail="Document not found") from exc
+        logger.error(f"Error getting document info for {document_id}: {exc}")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.get("/documents/{document_id}/file")
 async def get_document_file(document_id: str) -> Response:
     """Retrieve the actual file content of a document, either from local storage or OpenAI."""
+    logger.info(f"Retrieving file content for document ID: {document_id}")
+
     try:
         # Get file info and metadata
         file_info = await vector_store_service.get_file_info(document_id)
@@ -166,19 +181,22 @@ async def get_document_file(document_id: str) -> Response:
 
         # Try to serve from local storage first
         if metadata and metadata.local_file_path:
+            logger.debug(f"Attempting to serve from local storage: {metadata.local_file_path}")
             local_path = Path(metadata.local_file_path)
             if not local_path.exists():
+                logger.warning(f"Local file not found: {metadata.local_file_path}")
                 raise HTTPException(status_code=404, detail="Document not found")
+
             # Serve from local storage
             async with await anyio.open_file(local_path) as local_file:
                 file_content = await local_file.read()
 
                 # Determine content type from filename
-
                 content_type, _ = mimetypes.guess_type(filename)
                 if not content_type:
                     content_type = "application/octet-stream"
 
+                logger.info(f"Serving file from local storage: {filename} ({len(file_content)} bytes)")
                 return Response(
                     content=file_content,
                     media_type=content_type,
@@ -191,13 +209,17 @@ async def get_document_file(document_id: str) -> Response:
 
     except RuntimeError as exc:
         if "not found" in str(exc).lower():
+            logger.warning(f"Document file not found: {document_id}")
             raise HTTPException(status_code=404, detail="Document not found") from exc
+        logger.error(f"Error retrieving document file {document_id}: {exc}")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.delete("/documents/{document_id}")
 async def delete_document(document_id: str) -> dict[str, Any]:
     """Delete a document from all locations: local storage, vector store, and OpenAI Files."""
+    logger.info(f"Deleting document: {document_id}")
+
     try:
         # Get metadata for local file path
         metadata = metadata_store.get_metadata(document_id)
@@ -213,15 +235,17 @@ async def delete_document(document_id: str) -> dict[str, Any]:
                 if local_path.exists():
                     local_path.unlink()
                     local_deleted = True
+                    logger.debug(f"Deleted local file: {metadata.local_file_path}")
             except Exception as e:
-                print(f"Failed to delete local file: {e}")
+                logger.warning(f"Failed to delete local file: {e}")
 
         delete_results["local_storage"] = local_deleted
 
         # Delete metadata
         metadata_deleted = metadata_store.delete_metadata(document_id)
+        logger.debug(f"Metadata deletion result: {metadata_deleted}")
 
-        return {
+        result = {
             "message": "Document deletion completed",
             "document_id": document_id,
             "filename": metadata.original_filename if metadata else "unknown",
@@ -229,7 +253,12 @@ async def delete_document(document_id: str) -> dict[str, Any]:
             "success": any(delete_results.values()) or metadata_deleted,
         }
 
+        logger.info(f"Document deletion completed: {document_id}, success: {result['success']}")
+        return result
+
     except RuntimeError as exc:
         if "not found" in str(exc).lower():
+            logger.warning(f"Document not found for deletion: {document_id}")
             raise HTTPException(status_code=404, detail="Document not found") from exc
+        logger.error(f"Error deleting document {document_id}: {exc}")
         raise HTTPException(status_code=500, detail=str(exc)) from exc

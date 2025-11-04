@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import AsyncIterator
 from typing import Any
 
@@ -26,7 +27,11 @@ from .config import config
 from .memory_store import MemoryStore
 
 
+logger = logging.getLogger(__name__)
+
+
 if config.debug:
+    logger.info("Debug mode enabled - enabling verbose stdout logging")
     enable_verbose_stdout_logging()
 
 
@@ -47,9 +52,11 @@ class ExamPrepAssistantServer(ChatKitServer[dict[str, Any]]):
     """Simplified exam preparation assistant server focused on study assistance."""
 
     def __init__(self, agent: Agent[AgentContext]) -> None:
+        logger.info("Initializing ExamPrepAssistantServer")
         self.store = MemoryStore()
         super().__init__(self.store)
         self.assistant = agent
+        logger.info("ExamPrepAssistantServer initialized successfully")
 
     async def respond(
         self,
@@ -57,42 +64,60 @@ class ExamPrepAssistantServer(ChatKitServer[dict[str, Any]]):
         item: ThreadItem | None,
         context: dict[str, Any],
     ) -> AsyncIterator[ThreadStreamEvent]:
+        logger.debug(f"Processing request for thread {thread.id}")
+
         if item is None:
+            logger.debug("No item provided, returning")
             return
 
         if _is_tool_completion_item(item):
+            logger.debug("Tool completion item, skipping")
             return
 
         if not isinstance(item, UserMessageItem):
+            logger.debug("Not a user message item, skipping")
             return
 
         message_text = _user_message_text(item)
         if not message_text:
+            logger.debug("Empty message text, returning")
             return
+
+        logger.info(f"Processing user message: {message_text[:100]}...")
 
         agent_context = AgentContext(
             thread=thread,
             store=self.store,
             request_context=context,
         )
-        result = Runner.run_streamed(
-            self.assistant,
-            message_text,
-            context=agent_context,
-            run_config=RunConfig(model_settings=ModelSettings(temperature=0.3)),
-        )
 
-        async for event in stream_agent_response(agent_context, result):
-            yield event
+        try:
+            result = Runner.run_streamed(
+                self.assistant,
+                message_text,
+                context=agent_context,
+                run_config=RunConfig(model_settings=ModelSettings(temperature=0.3)),
+            )
+
+            async for event in stream_agent_response(agent_context, result):
+                yield event
+
+            logger.debug("Response streaming completed successfully")
+        except Exception as e:
+            logger.error(f"Error processing user message: {e}")
+            raise
 
     async def to_message_content(self, _input: Attachment) -> ResponseInputContentParam:
+        logger.warning("File attachment requested but not supported")
         raise RuntimeError("File attachments are not supported in this demo.")
 
 
 # Global server instance
+logger.info("Creating global ExamPrepAssistantServer instance")
 exam_prep_server = ExamPrepAssistantServer(agent=TriageAgent)
 
 
 def get_server() -> ExamPrepAssistantServer:
     """Dependency to get the exam prep server instance."""
+    logger.debug("Returning exam prep server instance")
     return exam_prep_server

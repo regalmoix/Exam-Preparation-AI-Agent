@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -13,6 +14,9 @@ from chatkit.types import ThreadItem
 from chatkit.types import ThreadMetadata
 
 
+logger = logging.getLogger(__name__)
+
+
 @dataclass
 class _ThreadState:
     thread: ThreadMetadata
@@ -23,6 +27,7 @@ class MemoryStore(Store[dict[str, Any]]):
     """Simple in-memory store compatible with the ChatKit server interface."""
 
     def __init__(self) -> None:
+        logger.info("Initializing MemoryStore")
         self._threads: dict[str, _ThreadState] = {}
         # Attachments intentionally unsupported; use a real store that enforces auth.
 
@@ -39,21 +44,26 @@ class MemoryStore(Store[dict[str, Any]]):
 
     # -- Thread metadata -------------------------------------------------
     async def load_thread(self, thread_id: str, context: dict[str, Any]) -> ThreadMetadata:
+        logger.debug(f"Loading thread: {thread_id}")
         state = self._threads.get(thread_id)
         if not state:
+            logger.warning(f"Thread not found: {thread_id}")
             raise NotFoundError(f"Thread {thread_id} not found")
         return self._coerce_thread_metadata(state.thread)
 
     async def save_thread(self, thread: ThreadMetadata, context: dict[str, Any]) -> None:
+        logger.debug(f"Saving thread: {thread.id}")
         metadata = self._coerce_thread_metadata(thread)
         state = self._threads.get(thread.id)
         if state:
             state.thread = metadata
+            logger.debug(f"Updated existing thread: {thread.id}")
         else:
             self._threads[thread.id] = _ThreadState(
                 thread=metadata,
                 items=[],
             )
+            logger.debug(f"Created new thread: {thread.id}")
 
     async def load_threads(
         self,
