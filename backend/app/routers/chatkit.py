@@ -12,6 +12,7 @@ from fastapi import Response
 from fastapi.responses import StreamingResponse
 from starlette.responses import JSONResponse
 
+from ..agents_sdk.mcp import AnkiMCPServer
 from ..services.server import ExamPrepAssistantServer
 from ..services.server import get_server
 
@@ -24,6 +25,7 @@ async def chatkit_endpoint(
     request: Request, server: Annotated[ExamPrepAssistantServer, Depends(get_server)]
 ) -> Response:
     """Main ChatKit interaction endpoint for the exam assistant."""
+    await AnkiMCPServer.connect()
     payload = await request.body()
     result = await server.process(payload, {"request": request})
     if isinstance(result, StreamingResult):
