@@ -11,7 +11,6 @@ from agents import function_tool
 from ..services.config import config
 
 
-# Custom function tools for study assistant
 @function_tool
 def store_research_summary(research_summary: str, topic: str, sources: list[str]) -> dict[str, Any]:
     """Store research summary for future reference."""
