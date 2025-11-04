@@ -5,45 +5,30 @@ from __future__ import annotations
 from agents import Agent
 
 from . import prompts
-from .tools import anki_mcp_tool
-from .tools import create_flashcard_deck
+from .mcp import AnkiMCPServer
 from .tools import file_search_tool
 from .tools import store_research_summary
 from .tools import web_search_tool
 
 
-SummarizerAgent = Agent(
-    name="Document Summarizer Agent",
-    handoff_description="This agent can find the relevant file from document store and then can output a summary of that document",
-    instructions=prompts.SUMMARIZER_PROMPT,
-    tools=[file_search_tool],
-)
-
-
-ResearchAgent = Agent(
-    name="Research Agent",
-    instructions=prompts.RESEARCH_PROMPT,
-    tools=[web_search_tool, store_research_summary],
-)
-
-
-RagQAAgent = Agent(
+AnswerStudentQueryAgent = Agent(
     name="RAG Question Answer Agent",
-    handoff_description="This agent can find the relevant file from document to answer any query of the student",
-    instructions=prompts.RAG_QA_PROMPT,
-    tools=[file_search_tool],
+    handoff_description="This agent can find the relevant information from document store to answer any query of the student. If the information is not available in the document store, it researches the internet to get information",
+    instructions=prompts.QA_PROMPT,
+    tools=[file_search_tool, web_search_tool, store_research_summary],
 )
 
 
-FlashcardGeneratorAgent = Agent(
-    name="Flashcard Generator Agent",
+FlashcardAgent = Agent(
+    name="Flashcard Agent",
+    handoff_description="This agent can use Anki to create flashcards and quiz materials and decks.",
     instructions=prompts.FLASHCARD_PROMPT,
-    tools=[file_search_tool, create_flashcard_deck, anki_mcp_tool],
-    # Note: For flashcards, we'll return a custom response format in the runner
+    tools=[file_search_tool],
+    mcp_servers=[AnkiMCPServer],
 )
 
 TriageAgent = Agent(
     name="Triage Agent",
     instructions=prompts.TRIAGE_PROMPT,
-    handoffs=[SummarizerAgent, ResearchAgent, RagQAAgent, FlashcardGeneratorAgent],
+    handoffs=[AnswerStudentQueryAgent, FlashcardAgent],
 )
