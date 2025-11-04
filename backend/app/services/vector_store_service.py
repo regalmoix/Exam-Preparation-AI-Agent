@@ -3,13 +3,20 @@
 from __future__ import annotations
 
 import mimetypes
+import time
 from dataclasses import dataclass
+from io import BytesIO
+from pathlib import Path
 from typing import Any
 from typing import BinaryIO
 
+import anyio
 from openai import OpenAI
 
+from ..models.document_metadata import DocumentMetadata
+from ..models.document_metadata import metadata_store
 from .config import config
+from .document_summarizer import document_summarizer
 
 
 @dataclass(frozen=True, slots=True)
@@ -205,6 +212,57 @@ class VectorStoreService:
             )
         except Exception as e:
             raise RuntimeError(f"Failed to retrieve file info: {e!s}") from e
+
+    async def add_file_to_vector_store(
+        self,
+        file_content: bytes,
+        filename: str,
+        file_extension: str,
+    ):
+        file_obj = BytesIO(file_content)
+
+        uploaded_file = await self.upload_file_to_vector_store(file=file_obj, filename=filename)
+
+        try:
+            description = await document_summarizer.generate_description(file_content, filename)
+        except Exception as e:
+            print(f"Failed to generate description for {filename}: {e}")
+            description = f"Study document ({len(file_content)} bytes)"
+
+        file_path = Path(filename)
+        title = file_path.stem  # Filename without extension
+
+        data_dir = Path("../data/uploaded_files")
+        data_dir.mkdir(parents=True, exist_ok=True)
+
+        safe_filename = f"{uploaded_file.id}_{filename}"
+        local_file_path = data_dir / safe_filename
+        async with await anyio.open_file(local_file_path, "wb") as local_file:
+            await local_file.write(file_content)
+
+        metadata = DocumentMetadata(
+            file_id=uploaded_file.id,
+            original_filename=filename,
+            title=title,
+            description=description,
+            file_size=len(file_content),
+            upload_time=int(time.time()),
+            file_type=file_extension,
+            local_file_path=str(local_file_path),
+        )
+        metadata_store.store_metadata(metadata)
+
+        return {
+            "message": "File uploaded successfully",
+            "file": {
+                "id": uploaded_file.id,
+                "filename": uploaded_file.filename,
+                "title": title,
+                "description": description,
+                "bytes": uploaded_file.bytes,
+                "status": uploaded_file.status,
+            },
+        }
 
 
 def as_file_dicts(files: list[VectorStoreFile]) -> list[dict[str, Any]]:

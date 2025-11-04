@@ -7,7 +7,7 @@ from agents import Agent
 from . import prompts
 from .mcp import AnkiMCPServer
 from .tools import file_search_tool
-from .tools import store_research_summary
+from .tools import store_research_data
 from .tools import web_search_tool
 
 
@@ -15,7 +15,7 @@ AnswerStudentQueryAgent = Agent(
     name="RAG Question Answer Agent",
     handoff_description="This agent can find the relevant information from document store to answer any query of the student. If the information is not available in the document store, it researches the internet to get information",
     instructions=prompts.QA_PROMPT,
-    tools=[file_search_tool, web_search_tool, store_research_summary],
+    tools=[file_search_tool, web_search_tool, store_research_data],
 )
 
 

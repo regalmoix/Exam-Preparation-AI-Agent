@@ -2,21 +2,15 @@
 
 from __future__ import annotations
 
-import time
-from io import BytesIO
 from pathlib import Path
 from typing import Annotated
 from typing import Any
 
-import anyio
 from fastapi import APIRouter
 from fastapi import File
 from fastapi import HTTPException
 from fastapi import UploadFile
 
-from ..models.document_metadata import DocumentMetadata
-from ..models.document_metadata import metadata_store
-from ..services.document_summarizer import document_summarizer
 from ..services.vector_store_service import as_file_dicts
 from ..services.vector_store_service import vector_store_service
 
@@ -76,60 +70,9 @@ async def upload_file_to_vector_store(file: Annotated[UploadFile, File()]) -> di
         )
 
     try:
-        # Read file content
         content = await file.read()
-        file_obj = BytesIO(content)
-
-        # Upload to vector store
-        uploaded_file = await vector_store_service.upload_file_to_vector_store(file=file_obj, filename=file.filename)
-
-        # Generate intelligent description using LLM
-        try:
-            description = await document_summarizer.generate_description(content, file.filename)
-        except Exception as e:
-            print(f"Failed to generate description for {file.filename}: {e}")
-            description = f"Study document ({len(content)} bytes)"
-
-        # Create title from original filename (remove path and clean up)
-        file_path = Path(file.filename)
-        title = file_path.stem  # Filename without extension
-
-        # Save local copy to data directory
-        data_dir = Path("../data/uploaded_files")
-        data_dir.mkdir(parents=True, exist_ok=True)
-
-        # Create safe filename using file ID to avoid conflicts
-        safe_filename = f"{uploaded_file.id}_{file.filename}"
-        local_file_path = data_dir / safe_filename
-
-        # Write the file content to local storage
-        async with await anyio.open_file(local_file_path, "wb") as local_file:
-            await local_file.write(content)
-
-        # Store enhanced metadata with local file path
-        metadata = DocumentMetadata(
-            file_id=uploaded_file.id,
-            original_filename=file.filename,
-            title=title,
-            description=description,
-            file_size=len(content),
-            upload_time=int(time.time()),
-            file_type=file_extension,
-            local_file_path=str(local_file_path),
-        )
-        metadata_store.store_metadata(metadata)
-
-        return {
-            "message": "File uploaded successfully",
-            "file": {
-                "id": uploaded_file.id,
-                "filename": uploaded_file.filename,
-                "title": title,
-                "description": description,
-                "bytes": uploaded_file.bytes,
-                "status": uploaded_file.status,
-            },
-        }
+        data = await vector_store_service.add_file_to_vector_store(content, file.filename, file_extension)
+        return data
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     finally:

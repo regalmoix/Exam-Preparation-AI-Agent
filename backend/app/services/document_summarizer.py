@@ -33,6 +33,7 @@ class DocumentSummarizer:
 
             # Generate description using OpenAI
             response = await self.client.chat.completions.create(
+                model="gpt-4o-mini",
                 messages=[
                     {
                         "role": "system",
