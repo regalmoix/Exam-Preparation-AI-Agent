@@ -5,8 +5,6 @@ from __future__ import annotations
 from agents import Agent
 
 from . import prompts
-from .models import ResearchResultSchema
-from .models import SummarySchema
 from .tools import anki_mcp_tool
 from .tools import create_flashcard_deck
 from .tools import extract_document_summary
@@ -17,9 +15,9 @@ from .tools import web_search_tool
 
 SummarizerAgent = Agent(
     name="Document Summarizer Agent",
+    handoff_description="This agent can find the relevant file from document store and then can output a summary of that document",
     instructions=prompts.SUMMARIZER_PROMPT,
     tools=[file_search_tool, extract_document_summary],
-    output_type=SummarySchema,
 )
 
 
@@ -27,12 +25,12 @@ ResearchAgent = Agent(
     name="Research Agent",
     instructions=prompts.RESEARCH_PROMPT,
     tools=[web_search_tool, store_research_summary],
-    output_type=ResearchResultSchema,
 )
 
 
 RagQAAgent = Agent(
-    name="RAG Q&A Agent",
+    name="RAG Question Answer Agent",
+    handoff_description="This agent can find the relevant file from document to answer any query of the student",
     instructions=prompts.RAG_QA_PROMPT,
     tools=[file_search_tool],
 )
