@@ -29,6 +29,7 @@ class Config:
 
         # Required environment variables
         self.openai_api_key = self._get_required_env("OPENAI_API_KEY")
+        self.notion_token = self._get_required_env("NOTION_TOKEN")
         self.exam_prep_vector_store_id = self._get_required_env("EXAM_PREP_VECTOR_STORE_ID")
 
         # Optional environment variables with defaults
