@@ -5,7 +5,6 @@ from __future__ import annotations
 from agents import Agent
 
 from . import prompts
-from .models import IntentClassificationSchema
 from .models import ResearchResultSchema
 from .models import SummarySchema
 from .tools import anki_mcp_tool
@@ -14,13 +13,6 @@ from .tools import extract_document_summary
 from .tools import file_search_tool
 from .tools import store_research_summary
 from .tools import web_search_tool
-
-
-IntentClassifierAgent = Agent(
-    name="Intent Classifier Agent",
-    instructions=prompts.INTENT_CLASSIFIER_PROMPT,
-    output_type=IntentClassificationSchema,
-)
 
 
 SummarizerAgent = Agent(
@@ -51,4 +43,10 @@ FlashcardGeneratorAgent = Agent(
     instructions=prompts.FLASHCARD_PROMPT,
     tools=[file_search_tool, create_flashcard_deck, anki_mcp_tool],
     # Note: For flashcards, we'll return a custom response format in the runner
+)
+
+TriageAgent = Agent(
+    name="Triage Agent",
+    instructions=prompts.TRIAGE_PROMPT,
+    handoffs=[SummarizerAgent, ResearchAgent, RagQAAgent, FlashcardGeneratorAgent],
 )

@@ -10,10 +10,10 @@ from agents import RunConfig
 from agents import Runner
 
 from .agents import FlashcardGeneratorAgent
-from .agents import IntentClassifierAgent
 from .agents import RagQAAgent
 from .agents import ResearchAgent
 from .agents import SummarizerAgent
+from .agents import TriageAgent
 
 
 class StudyAgentRunner:
@@ -22,7 +22,7 @@ class StudyAgentRunner:
     def __init__(self):
         """Initialize the agent runner with all agents."""
         self.agents = {
-            "intent_classifier": IntentClassifierAgent,
+            "intent_classifier": TriageAgent,
             "summarizer": SummarizerAgent,
             "research": ResearchAgent,
             "rag_qa": RagQAAgent,

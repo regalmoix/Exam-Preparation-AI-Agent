@@ -24,12 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers with exam-assistant namespace
 app.include_router(chatkit.router, prefix="/exam-assistant", tags=["ChatKit"])
 app.include_router(documents.router, prefix="/exam-assistant", tags=["Documents"])
 app.include_router(vector_store.router, prefix="/exam-assistant", tags=["Vector Store"])
 app.include_router(agent_workflow.router, prefix="/exam-assistant", tags=["Agent Workflow"])
-
-
-# All endpoints have been moved to routers under /exam-assistant namespace
-# See routers/chatkit.py, routers/documents.py, and routers/vector_store.py

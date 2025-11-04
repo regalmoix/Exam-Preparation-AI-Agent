@@ -146,7 +146,7 @@ async def classify_user_intent(request: IntentClassificationRequest) -> dict[str
                 "parameters": classification.get("entities", {}),
             },
             "sdk_info": {
-                "agent_used": "IntentClassifierAgent",
+                "agent_used": "TriageAgent",
                 "model": "gpt-4o-mini",
                 "response_format": "IntentClassificationSchema",
                 "temperature": 0.1,
@@ -180,7 +180,7 @@ async def smart_chat_routing(request: ChatRequest) -> dict[str, Any]:
             "sdk_info": {
                 "coordination": "Multi-agent routing with SDK",
                 "agents_available": [
-                    "IntentClassifierAgent",
+                    "TriageAgent",
                     "SummarizerAgent",
                     "ResearchAgent",
                     "FlashcardGeneratorAgent",
