@@ -39,6 +39,10 @@ logger.info("Notion Server initialized successfully")
 
 
 async def connect():
-    await AnkiMCPServer.connect()
-    await NotionMCPServer.connect()
-    logger.info("MCP Servers connected successfully")
+    try:
+        await AnkiMCPServer.connect()
+        await NotionMCPServer.connect()
+        logger.info("MCP Servers connected successfully")
+    except Exception as e:
+        logger.error(f"Error connecting to MCP Servers: {e}")
+        raise
