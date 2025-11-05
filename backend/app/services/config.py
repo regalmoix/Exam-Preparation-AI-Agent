@@ -12,8 +12,6 @@ logger = logging.getLogger(__name__)
 
 class Config:
     def __init__(self):
-        logger.info("Initializing configuration")
-
         dotenv_path = find_dotenv()
         if dotenv_path:
             logger.debug(f"Loading environment from {dotenv_path}")
@@ -26,15 +24,7 @@ class Config:
         self.exam_prep_vector_store_id = self._get_required_env("EXAM_PREP_VECTOR_STORE_ID")
 
         self.logfire_token = os.getenv("LOGFIRE_TOKEN", "")
-        self.debug = os.getenv("DEBUG") not in (None, "0", "false", 0, False, "False")
         self.log_level = os.getenv("LOG_LEVEL", "INFO").upper()
-        self.api_host = os.getenv("API_HOST", "127.0.0.1")
-        self.api_port = int(os.getenv("API_PORT", "8002"))
-
-        self.frontend_port = int(os.getenv("VITE_PORT", "5172"))
-        self.api_base_url = os.getenv("VITE_API_BASE_URL", f"http://{self.api_host}:{self.api_port}")
-
-        logger.info(f"Configuration loaded - Debug: {self.debug}, API: {self.api_host}:{self.api_port}")
 
     @staticmethod
     def _get_required_env(key: str) -> str:

@@ -45,10 +45,6 @@ class ColoredFormatter(logging.Formatter):
 
 def setup_logging():
     log_level = config.log_level
-    debug_mode = config.debug
-
-    if debug_mode:
-        log_level = "DEBUG"
 
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(ColoredFormatter())
@@ -66,7 +62,7 @@ def setup_logging():
     logging.getLogger("fastapi").setLevel(logging.INFO)
     logging.getLogger("httpcore").setLevel(logging.INFO)
 
-    if debug_mode:
+    if log_level == "DEBUG":
         enable_verbose_stdout_logging()
         logging.getLogger("openai").setLevel(logging.DEBUG)
 
