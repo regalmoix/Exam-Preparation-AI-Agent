@@ -79,10 +79,10 @@ class VectorStoreService:
         try:
             response = self.client.vector_stores.retrieve(self.vector_store_id)
             info = VectorStoreInfo.from_openai_response(response.model_dump())
-            logger.debug(f"Vector store info retrieved: {info.file_counts} files")
+            logger.info(f"Vector store info retrieved: {info.file_counts} files")
             return info
         except Exception as e:
-            logger.error(f"Failed to retrieve vector store info: {e}")
+            logger.exception(f"Failed to retrieve vector store info: {e}")
             raise RuntimeError(f"Failed to retrieve vector store info: {e!s}") from e
 
     async def list_vector_store_files(

@@ -30,9 +30,7 @@ async def list_documents() -> dict[str, Any]:
 
         documents = []
         for file in files:
-            metadata = metadata_store.get_metadata(file.id)
-
-            if metadata:
+            if metadata := metadata_store.get_metadata(file.id):
                 documents.append(
                     {
                         "id": file.id,
@@ -44,47 +42,10 @@ async def list_documents() -> dict[str, Any]:
                         "usage_bytes": file.usage_bytes or metadata.file_size,
                     }
                 )
-            else:
-                original_filename = file.filename
-
-                # Remove common prefixes that OpenAI might add
-                clean_filename = original_filename.replace("file_", "")
-
-                if clean_filename.startswith("file-"):
-                    title = f"Document {clean_filename[-6:]}"
-                    description = f"Study document uploaded to vector store ({file.usage_bytes or 0} bytes)"
-                else:
-                    file_path = Path(clean_filename)
-                    title = file_path.stem
-
-                    extension = file_path.suffix.lower()
-                    if extension == ".pdf":
-                        description = "PDF study document"
-                    elif extension in [".txt", ".md"]:
-                        description = "Text-based study material"
-                    elif extension == ".html":
-                        description = "Web-based study content"
-                    elif extension == ".docx":
-                        description = "Word document for study"
-                    else:
-                        description = f"Study document ({file.usage_bytes or 0} bytes)"
-
-                documents.append(
-                    {
-                        "id": file.id,
-                        "filename": original_filename,
-                        "title": title,
-                        "description": description,
-                        "created_at": file.created_at,
-                        "status": file.status,
-                        "usage_bytes": file.usage_bytes,
-                    }
-                )
-
         logger.info(f"Successfully listed {len(documents)} documents")
         return {"documents": documents}
     except RuntimeError as exc:
-        logger.error(f"Error listing documents: {exc}")
+        logger.exception(f"Error listing documents: {exc}")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
@@ -94,10 +55,7 @@ async def get_document_info(document_id: str) -> dict[str, Any]:
 
     try:
         file_info = await vector_store_service.get_file_info(document_id)
-
-        metadata = metadata_store.get_metadata(document_id)
-
-        if metadata:
+        if metadata := metadata_store.get_metadata(document_id):
             return {
                 "id": file_info.id,
                 "filename": metadata.original_filename,
@@ -112,44 +70,12 @@ async def get_document_info(document_id: str) -> dict[str, Any]:
                 "upload_time": metadata.upload_time,
             }
         else:
-            original_filename = file_info.filename
-            clean_filename = original_filename.replace("file_", "")
-
-            if clean_filename.startswith("file-"):
-                title = f"Document {clean_filename[-6:]}"
-                description = f"Study document uploaded to vector store ({file_info.usage_bytes or 0} bytes)"
-            else:
-                file_path = Path(clean_filename)
-                title = file_path.stem
-                extension = file_path.suffix.lower()
-
-                if extension == ".pdf":
-                    description = "PDF study document"
-                elif extension in [".txt", ".md"]:
-                    description = "Text-based study material"
-                elif extension == ".html":
-                    description = "Web-based study content"
-                elif extension == ".docx":
-                    description = "Word document for study"
-                else:
-                    description = f"Study document ({file_info.usage_bytes or 0} bytes)"
-
-            return {
-                "id": file_info.id,
-                "filename": original_filename,
-                "title": title,
-                "description": description,
-                "created_at": file_info.created_at,
-                "status": file_info.status,
-                "usage_bytes": file_info.usage_bytes,
-                "bytes": file_info.bytes,
-                "object": file_info.object,
-            }
+            return {}
     except RuntimeError as exc:
         if "not found" in str(exc).lower():
             logger.warning(f"Document not found: {document_id}")
             raise HTTPException(status_code=404, detail="Document not found") from exc
-        logger.error(f"Error getting document info for {document_id}: {exc}")
+        logger.exception(f"Error getting document info for {document_id}: {exc}")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
@@ -170,7 +96,7 @@ async def get_document_file(document_id: str) -> Response:
                 logger.warning(f"Local file not found: {metadata.local_file_path}")
                 raise HTTPException(status_code=404, detail="Document not found")
 
-            async with await anyio.open_file(local_path) as local_file:
+            async with await anyio.open_file(local_path, "rb") as local_file:
                 file_content = await local_file.read()
 
                 content_type, _ = mimetypes.guess_type(filename)

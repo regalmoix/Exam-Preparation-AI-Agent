@@ -12,7 +12,7 @@ exclude = []
 
 [lint]
 select = [
-    "E", "F", "I", "W", "UP", "YTT", "ASYNC", "S", "B", "A", "FA", "PL", "FURB", "RUF", "PERF", "FAST",
+    "E", "F", "I", "W", "UP", "YTT", "ASYNC", "S", "B", "A", "FA", "PL", "FURB", "RUF", "FAST",
     "ASYNC", "C4", "T10", "ISC", "ICN", "G", "INP", "SLOT", "PIE",
 ]
 ignore = ["E501", "B904", "S301", "S608", "S311", "PLR09", "PLR2004", "PLC0415", "RUF005", "RUF012", "S101", "G004", "E402"]

@@ -7,7 +7,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .routers import chatkit
 from .routers import documents
-from .routers import vector_store
 from .services.config import config
 from .services.log_service import setup_logging  # noqa
 
@@ -33,5 +32,4 @@ app.add_middleware(
 logger.info("Configuring API routes")
 app.include_router(chatkit.router, prefix="/exam-assistant", tags=["ChatKit"])
 app.include_router(documents.router, prefix="/exam-assistant", tags=["Documents"])
-app.include_router(vector_store.router, prefix="/exam-assistant", tags=["Vector Store"])
 logger.info("API initialization complete")
