@@ -69,13 +69,11 @@ class VectorStoreInfo:
 
 class VectorStoreService:
     def __init__(self):
-        logger.info("Initializing VectorStoreService")
         self.client = OpenAI(api_key=config.openai_api_key)
         self.vector_store_id = config.exam_prep_vector_store_id
-        logger.debug(f"Vector store service initialized with store ID: {self.vector_store_id}")
 
     async def get_vector_store_info(self) -> VectorStoreInfo:
-        logger.debug("Retrieving vector store info")
+        logger.info("Retrieving vector store info")
         try:
             response = self.client.vector_stores.retrieve(self.vector_store_id)
             info = VectorStoreInfo.from_openai_response(response.model_dump())

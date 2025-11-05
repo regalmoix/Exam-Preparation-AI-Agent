@@ -4,7 +4,6 @@ import json
 from dataclasses import asdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 
 @dataclass
@@ -53,22 +52,9 @@ class DocumentMetadataStore:
     def get_metadata(self, file_id: str) -> DocumentMetadata | None:
         return self._metadata.get(file_id)
 
-    def list_all_metadata(self) -> list[DocumentMetadata]:
-        return list(self._metadata.values())
-
     def delete_metadata(self, file_id: str) -> bool:
         if file_id in self._metadata:
             del self._metadata[file_id]
-            self._save_metadata()
-            return True
-        return False
-
-    def update_metadata(self, file_id: str, **updates: Any) -> bool:
-        if file_id in self._metadata:
-            metadata = self._metadata[file_id]
-            for key, value in updates.items():
-                if hasattr(metadata, key):
-                    setattr(metadata, key, value)
             self._save_metadata()
             return True
         return False

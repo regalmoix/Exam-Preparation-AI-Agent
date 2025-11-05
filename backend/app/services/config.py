@@ -25,10 +25,10 @@ class Config:
 
         self.openai_api_key = self._get_required_env("OPENAI_API_KEY")
         self.notion_token = self._get_required_env("NOTION_TOKEN")
-        
+
         # Check if vector store needs to be created
         self._create_vector_store_if_needed(dotenv_path)
-        
+
         self.exam_prep_vector_store_id = self._get_required_env("EXAM_PREP_VECTOR_STORE_ID")
 
         self.logfire_token = os.getenv("LOGFIRE_TOKEN", "")
@@ -43,46 +43,44 @@ class Config:
                 f"{key} is not set. Please copy .env.template to .env and set this variable. "
                 f"See README.md for setup instructions."
             )
-        logger.debug(f"Required environment variable {key} loaded successfully")
+        logger.info(f"Required environment variable {key} loaded successfully")
         return value
 
     def _create_vector_store_if_needed(self, dotenv_path: str | None) -> None:
         """Create vector store if EXAM_PREP_VECTOR_STORE_ID is set to placeholder value."""
         placeholder_value = "vs_your-vector-store-id-here"
         current_value = os.getenv("EXAM_PREP_VECTOR_STORE_ID")
-        
+
         if current_value != placeholder_value:
             return
-        
+
         logger.info("Detected placeholder vector store ID, creating new vector store...")
-        
+
         if not dotenv_path:
-            raise RuntimeError(
-                "Cannot create vector store: .env file not found. "
-                "Please create a .env file first."
-            )
-        
+            raise RuntimeError("Cannot create vector store: .env file not found. Please create a .env file first.")
+
         # Generate vector store name
         try:
             hostname = platform.node() or ""
             if not hostname:
                 try:
                     import socket
+
                     hostname = socket.gethostname() or ""
                 except Exception:
-                    pass
-            
+                    logging.exception("Failed to get hostname")
+
             if hostname:
                 identifier = hostname
             else:
                 identifier = secrets.token_hex(4)
-            
+
             store_name = f"Hackathon - {identifier}"
         except Exception as e:
             logger.warning(f"Failed to get hostname, using random identifier: {e}")
             identifier = secrets.token_hex(4)
             store_name = f"Hackathon - {identifier}"
-        
+
         # Create vector store via OpenAI API
         try:
             client = OpenAI(api_key=self.openai_api_key)
@@ -92,9 +90,9 @@ class Config:
             logger.info(f"Successfully created vector store: {new_vector_store_id}")
         except Exception as e:
             error_msg = f"Failed to create vector store: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise RuntimeError(error_msg) from e
-        
+
         # Update .env file
         try:
             set_key(dotenv_path, "EXAM_PREP_VECTOR_STORE_ID", new_vector_store_id)
@@ -115,7 +113,7 @@ class Config:
             logger.info("Configuration validation successful")
             return True
         except RuntimeError:
-            logger.error("Configuration validation failed")
+            logger.exception("Configuration validation failed")
             return False
 
 

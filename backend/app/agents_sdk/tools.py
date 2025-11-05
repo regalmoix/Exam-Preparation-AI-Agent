@@ -28,7 +28,7 @@ async def store_research_data(research_detailed_text: str, filename: str) -> dic
     filename = f"{filename}.txt"
 
     try:
-        logger.debug(f"Adding file to vector store: {filename}, content length: {len(research_detailed_text)}")
+        logger.info(f"Adding file to vector store: {filename}, content length: {len(research_detailed_text)}")
         data = await vector_store_service.add_file_to_vector_store(research_detailed_text.encode(), filename, ".txt")
 
         result = {
@@ -42,14 +42,10 @@ async def store_research_data(research_detailed_text: str, filename: str) -> dic
         return result
 
     except Exception as e:
-        logger.error(f"Failed to store research data for {filename}: {e}")
+        logger.exception(f"Failed to store research data for {filename}: {e}")
         raise
 
 
-logger.info("Initializing file search tool")
 file_search_tool = FileSearchTool(vector_store_ids=[config.exam_prep_vector_store_id], max_num_results=3)
 
-logger.info("Initializing web search tool")
 web_search_tool = WebSearchTool(search_context_size="medium")
-
-logger.info("All tools initialized successfully")

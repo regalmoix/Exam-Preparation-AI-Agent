@@ -5,6 +5,7 @@ import sys
 
 import logfire
 from agents import enable_verbose_stdout_logging
+from fastapi import FastAPI
 
 from .config import config
 
@@ -43,7 +44,12 @@ class ColoredFormatter(logging.Formatter):
         return formatter.format(record)
 
 
-def setup_logging():
+def setup_logging(app: FastAPI) -> None:
+    enable_verbose_stdout_logging()
+    logfire.configure(token=config.logfire_token)
+    logfire.instrument_openai_agents()
+    logfire.instrument_fastapi(app)
+
     log_level = config.log_level
 
     console_handler = logging.StreamHandler(sys.stdout)
@@ -56,15 +62,11 @@ def setup_logging():
         root_logger.removeHandler(handler)
 
     root_logger.addHandler(console_handler)
+    root_logger.addHandler(logfire.LogfireLoggingHandler())
 
     logging.getLogger("uvicorn").setLevel(logging.INFO)
     logging.getLogger("uvicorn.access").setLevel(logging.INFO)
     logging.getLogger("fastapi").setLevel(logging.INFO)
     logging.getLogger("httpcore").setLevel(logging.INFO)
     logging.getLogger("openai").setLevel(logging.INFO)
-    enable_verbose_stdout_logging()
-
-
-setup_logging()
-logfire.configure(token=config.logfire_token)
-logfire.instrument_openai_agents()
+    logging.getLogger("urllib3").setLevel(logging.INFO)

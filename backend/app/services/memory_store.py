@@ -25,7 +25,6 @@ class _ThreadState:
 
 class MemoryStore(Store[dict[str, Any]]):
     def __init__(self) -> None:
-        logger.info("Initializing MemoryStore")
         self._threads: dict[str, _ThreadState] = {}
         # Attachments intentionally unsupported; use a real store that enforces auth.
 

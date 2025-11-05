@@ -13,18 +13,16 @@ logger = logging.getLogger(__name__)
 
 class DocumentSummarizer:
     def __init__(self):
-        logger.info("Initializing DocumentSummarizer")
         self.client = AsyncOpenAI(api_key=config.openai_api_key)
 
     async def generate_description(self, file_content: bytes, filename: str) -> str:
-        logger.debug(f"Generating description for document: {filename}")
+        logger.info(f"Generating description for document: {filename}")
 
         try:
             try:
                 text_content = file_content.decode("utf-8")
-                logger.debug(f"Successfully decoded {filename} as UTF-8 text")
             except UnicodeDecodeError:
-                logger.debug(f"Failed to decode {filename} as UTF-8, using fallback description")
+                logger.warning(f"Failed to decode {filename} as UTF-8, using fallback description")
 
                 return self._generate_fallback_description(filename)
 
@@ -33,7 +31,7 @@ class DocumentSummarizer:
                 logger.debug(f"Truncating content for {filename}: {len(text_content)} -> {max_content_size} chars")
                 text_content = text_content[:max_content_size] + "..."
 
-            logger.debug(f"Calling OpenAI API to generate description for {filename}")
+            logger.info(f"Calling OpenAI API to generate description for {filename}")
             response = await self.client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
@@ -67,10 +65,11 @@ Keep it under 100 characters and make it useful for study organization.""",
             return description or self._generate_fallback_description(filename)
 
         except Exception as e:
-            logger.error(f"Error generating description for {filename}: {e}")
+            logger.exception(f"Error generating description for {filename}: {e}")
             return self._generate_fallback_description(filename)
 
-    def _generate_fallback_description(self, filename: str) -> str:
+    @staticmethod
+    def _generate_fallback_description(filename: str) -> str:
         logger.debug(f"Generating fallback description for {filename}")
 
         file_path = Path(filename)

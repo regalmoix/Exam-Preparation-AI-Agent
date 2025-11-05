@@ -9,7 +9,6 @@ from ..services.config import config
 
 logger = logging.getLogger(__name__)
 
-logger.info("Initializing Anki MCP Server")
 AnkiMCPServer = MCPServerStdio(
     cache_tools_list=True,
     # tool_filter=create_static_tool_filter(
@@ -21,10 +20,8 @@ AnkiMCPServer = MCPServerStdio(
         "env": {"ANKI_CONNECT_URL": "http://localhost:8765"},
     },
 )
-logger.info("Anki MCP Server initialized successfully")
 
 
-logger.info("Initializing Notion MCP Server")
 NotionMCPServer = MCPServerStdio(
     params={
         "command": "npx",
@@ -35,7 +32,6 @@ NotionMCPServer = MCPServerStdio(
         },
     },
 )
-logger.info("Notion Server initialized successfully")
 
 
 async def connect():

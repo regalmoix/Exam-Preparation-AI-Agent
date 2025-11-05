@@ -43,12 +43,10 @@ def _is_tool_completion_item(item: Any) -> bool:
 
 class ExamPrepAssistantServer(ChatKitServer[dict[str, Any]]):
     def __init__(self, agent: Agent[AgentContext]) -> None:
-        logger.info("Initializing ExamPrepAssistantServer")
         self.store = MemoryStore()
         self.session = SQLiteSession(uuid.uuid4().hex)
         super().__init__(self.store)
         self.assistant = agent
-        logger.info("ExamPrepAssistantServer initialized successfully")
 
     async def respond(
         self,
@@ -59,7 +57,6 @@ class ExamPrepAssistantServer(ChatKitServer[dict[str, Any]]):
         logger.debug(f"Processing request for thread {thread.id}")
 
         if item is None:
-            logger.debug("No item provided, returning")
             return
 
         if _is_tool_completion_item(item):
@@ -100,8 +97,9 @@ class ExamPrepAssistantServer(ChatKitServer[dict[str, Any]]):
             logger.error(f"Error processing user message: {e}")
             raise
 
-    async def to_message_content(self, _input: Attachment) -> ResponseInputContentParam:
-        logger.warning("File attachment requested but not supported")
+    @staticmethod
+    async def to_message_content(_input: Attachment) -> ResponseInputContentParam:
+        logger.error("File attachment requested but not supported")
         raise RuntimeError("File attachments are not supported in this demo.")
 
 
@@ -109,5 +107,4 @@ exam_prep_server = ExamPrepAssistantServer(agent=TriageAgent)
 
 
 def get_server() -> ExamPrepAssistantServer:
-    logger.debug("Returning exam prep server instance")
     return exam_prep_server

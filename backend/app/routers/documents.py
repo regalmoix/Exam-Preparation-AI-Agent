@@ -29,7 +29,7 @@ async def list_documents() -> dict[str, Any]:
 
     try:
         files = await vector_store_service.list_vector_store_files(limit=100)
-        logger.debug(f"Retrieved {len(files)} files from vector store")
+        logger.info(f"Retrieved {len(files)} files from vector store")
 
         documents = []
         for file in files:
@@ -132,7 +132,7 @@ async def get_document_file(document_id: str) -> Response:
         filename = metadata.original_filename if metadata else file_info.filename
 
         if metadata and metadata.local_file_path:
-            logger.debug(f"Attempting to serve from local storage: {metadata.local_file_path}")
+            logger.info(f"Attempting to serve from local storage: {metadata.local_file_path}")
             local_path = Path(metadata.local_file_path)
             if not local_path.exists():
                 logger.warning(f"Local file not found: {metadata.local_file_path}")
@@ -160,7 +160,7 @@ async def get_document_file(document_id: str) -> Response:
         if "not found" in str(exc).lower():
             logger.warning(f"Document file not found: {document_id}")
             raise HTTPException(status_code=404, detail="Document not found") from exc
-        logger.error(f"Error retrieving document file {document_id}: {exc}")
+        logger.exception(f"Error retrieving document file {document_id}: {exc}")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
@@ -180,7 +180,7 @@ async def delete_document(document_id: str) -> dict[str, Any]:
                 if local_path.exists():
                     local_path.unlink()
                     local_deleted = True
-                    logger.debug(f"Deleted local file: {metadata.local_file_path}")
+                    logger.warning(f"Deleted local file: {metadata.local_file_path}")
             except Exception as e:
                 logger.warning(f"Failed to delete local file: {e}")
 

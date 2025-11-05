@@ -9,7 +9,6 @@ from fastapi import Depends
 from fastapi import Request
 from fastapi import Response
 from fastapi.responses import StreamingResponse
-from starlette.requests import ClientDisconnect
 from starlette.responses import JSONResponse
 
 from ..agents_sdk.mcp import connect
@@ -37,14 +36,11 @@ async def chatkit_endpoint(
         result = await server.process(payload, {"request": request})
 
         if isinstance(result, StreamingResult):
-            logger.debug("Returning streaming response")
             return StreamingResponse(result, media_type="text/event-stream")
 
         if hasattr(result, "json"):
-            logger.debug("Returning JSON response")
             return Response(content=result.json, media_type="application/json")
 
-        logger.debug("Returning JSON response via JSONResponse")
         return JSONResponse(result)
 
     except Exception as e:
@@ -53,5 +49,4 @@ async def chatkit_endpoint(
 
 @router.get("/health")
 async def health_check() -> dict[str, str]:
-    logger.debug("Health check endpoint called")
     return {"status": "healthy"}
