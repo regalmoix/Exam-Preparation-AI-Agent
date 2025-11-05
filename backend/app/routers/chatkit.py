@@ -9,6 +9,7 @@ from fastapi import Depends
 from fastapi import Request
 from fastapi import Response
 from fastapi.responses import StreamingResponse
+from starlette.requests import ClientDisconnect
 from starlette.responses import JSONResponse
 
 from ..agents_sdk.mcp import connect
@@ -48,7 +49,6 @@ async def chatkit_endpoint(
 
     except Exception as e:
         logger.error(f"Error processing chatkit request: {e}")
-        raise
 
 
 @router.get("/health")
