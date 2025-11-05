@@ -12,6 +12,8 @@ Requires-Dist: python-dotenv
 Requires-Dist: pre-commit
 Requires-Dist: pytest
 Requires-Dist: pytest-asyncio
+Requires-Dist: logfire
+Requires-Dist: logfire[fastapi]
 Provides-Extra: dev
 Requires-Dist: ruff; extra == "dev"
 Requires-Dist: mypy; extra == "dev"

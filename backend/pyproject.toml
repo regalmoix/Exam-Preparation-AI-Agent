@@ -12,7 +12,9 @@ dependencies = [
     "python-dotenv",
     "pre-commit",
     "pytest",
-    "pytest-asyncio"
+    "pytest-asyncio",
+    "logfire",
+    "logfire[fastapi]",
 ]
 
 [project.optional-dependencies]

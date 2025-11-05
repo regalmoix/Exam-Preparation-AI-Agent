@@ -7,6 +7,8 @@ python-dotenv
 pre-commit
 pytest
 pytest-asyncio
+logfire
+logfire[fastapi]
 
 [dev]
 ruff
