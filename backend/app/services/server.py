@@ -101,7 +101,6 @@ class ExamPrepAssistantServer(ChatKitServer[dict[str, Any]]):
         raise RuntimeError("File attachments are not supported in this demo.")
 
 
-logger.info("Creating global ExamPrepAssistantServer instance")
 exam_prep_server = ExamPrepAssistantServer(agent=TriageAgent)
 
 

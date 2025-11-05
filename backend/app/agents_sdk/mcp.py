@@ -4,9 +4,10 @@ import logging
 
 from agents.mcp import MCPServerStdio
 
+from ..services.config import config
+
 
 logger = logging.getLogger(__name__)
-
 
 logger.info("Initializing Anki MCP Server")
 AnkiMCPServer = MCPServerStdio(
@@ -21,3 +22,23 @@ AnkiMCPServer = MCPServerStdio(
     },
 )
 logger.info("Anki MCP Server initialized successfully")
+
+
+logger.info("Initializing Notion MCP Server")
+NotionMCPServer = MCPServerStdio(
+    params={
+        "command": "npx",
+        "args": ["-y", "@suekou/mcp-notion-server"],
+        "env": {
+            "NOTION_API_TOKEN": config.notion_token,
+            "NOTION_TOKEN": config.notion_token,
+        },
+    },
+)
+logger.info("Notion Server initialized successfully")
+
+
+async def connect():
+    await AnkiMCPServer.connect()
+    await NotionMCPServer.connect()
+    logger.info("MCP Servers connected successfully")

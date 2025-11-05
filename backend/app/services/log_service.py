@@ -61,10 +61,8 @@ def setup_logging():
     logging.getLogger("uvicorn.access").setLevel(logging.INFO)
     logging.getLogger("fastapi").setLevel(logging.INFO)
     logging.getLogger("httpcore").setLevel(logging.INFO)
-
-    if log_level == "DEBUG":
-        enable_verbose_stdout_logging()
-        logging.getLogger("openai").setLevel(logging.DEBUG)
+    logging.getLogger("openai").setLevel(logging.INFO)
+    enable_verbose_stdout_logging()
 
 
 setup_logging()

@@ -11,7 +11,7 @@ from fastapi import Response
 from fastapi.responses import StreamingResponse
 from starlette.responses import JSONResponse
 
-from ..agents_sdk.mcp import AnkiMCPServer
+from ..agents_sdk.mcp import connect
 from ..services.server import ExamPrepAssistantServer
 from ..services.server import get_server
 
@@ -29,9 +29,7 @@ async def chatkit_endpoint(
     logger.info(f"Received chatkit request from {request.client.host if request.client else 'unknown'}")
 
     try:
-        logger.debug("Connecting to Anki MCP Server")
-        await AnkiMCPServer.connect()
-
+        await connect()
         payload = await request.body()
         logger.debug(f"Processing request payload of size: {len(payload)} bytes")
 
