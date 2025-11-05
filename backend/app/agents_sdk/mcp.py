@@ -23,7 +23,13 @@ NotionMCPServer = MCPServerStdio(
 
 async def connect():
     try:
-        await NotionMCPServer.connect()
-        logger.info("Notion MCP Server connected successfully")
+        if NotionMCPServer.session is None:
+            await NotionMCPServer.connect()
+            available_tools = await NotionMCPServer.list_tools()
+            logger.info(f"Available tools: {[tool.name for tool in available_tools]}")
+            logger.info("Notion MCP Server connected successfully")
+        else:
+            logger.warning("Notion MCP already connected")
     except Exception as e:
         logger.error(f"Error connecting to Notion MCP Server: {e}")
+        await NotionMCPServer.cleanup()
