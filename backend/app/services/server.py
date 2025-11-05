@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import logging
+import uuid
 from collections.abc import AsyncIterator
 from typing import Any
 
 from agents import Agent
 from agents import RunConfig
 from agents import Runner
+from agents import SQLiteSession
 from agents.model_settings import ModelSettings
 from chatkit.agents import AgentContext
 from chatkit.agents import stream_agent_response
@@ -43,6 +45,7 @@ class ExamPrepAssistantServer(ChatKitServer[dict[str, Any]]):
     def __init__(self, agent: Agent[AgentContext]) -> None:
         logger.info("Initializing ExamPrepAssistantServer")
         self.store = MemoryStore()
+        self.session = SQLiteSession(uuid.uuid4().hex)
         super().__init__(self.store)
         self.assistant = agent
         logger.info("ExamPrepAssistantServer initialized successfully")
@@ -86,6 +89,7 @@ class ExamPrepAssistantServer(ChatKitServer[dict[str, Any]]):
                 message_text,
                 context=agent_context,
                 run_config=RunConfig(model_settings=ModelSettings(temperature=0.3)),
+                session=self.session,
             )
 
             async for event in stream_agent_response(agent_context, result):
