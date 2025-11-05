@@ -22,13 +22,6 @@
 3. Use `nvm` OR ensure Node V22+: `nvm use`
 4. Install dependencies and launch the API: `npm run backend`
 
-#### Anki Setup
-1. [Download Anki](https://apps.ankiweb.net/#downloads) for your OS, and install it.
-2. Open Anki, and finish the one-time setup. 
-3. Go to Tools (in menu bar) > Add ons > Install code 2055492159 to get AnkiConnect
-4. Restart Anki
-
-
 #### Start the React Frontend
 1. Use `nvm` OR ensure Node V22+: `nvm use`
 2. Launch frontend server: `npm run frontend`

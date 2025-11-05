@@ -5,7 +5,6 @@ import logging
 from agents import Agent
 
 from . import prompts
-from .mcp import AnkiMCPServer
 from .mcp import NotionMCPServer
 from .tools import file_search_tool
 from .tools import store_research_data
@@ -22,14 +21,6 @@ AnswerStudentQueryAgent = Agent(
     tools=[file_search_tool, web_search_tool, store_research_data],
 )
 
-FlashcardAgent = Agent(
-    name="Flashcard Agent",
-    handoff_description="This agent can use Anki to create flashcards and quiz materials and decks.",
-    instructions=prompts.FLASHCARD_PROMPT,
-    tools=[file_search_tool],
-    mcp_servers=[AnkiMCPServer],
-)
-
 NotionAgent = Agent(
     name="Notion Agent",
     handoff_description="This agent can use Notion, which is used as a versatile, all-in-one workspace for note-taking, project management, data organization, and knowledge management",
@@ -40,5 +31,5 @@ NotionAgent = Agent(
 TriageAgent = Agent(
     name="Triage Agent",
     instructions=prompts.TRIAGE_PROMPT,
-    handoffs=[AnswerStudentQueryAgent, NotionAgent, FlashcardAgent],
+    handoffs=[AnswerStudentQueryAgent, NotionAgent],
 )
