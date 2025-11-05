@@ -33,7 +33,7 @@ async def run(mcp_server: MCPServer):
 
 async def main():
     async with MCPServerStdio(
-        cache_tools_list=True,  # Cache the tools list, for demonstration
+        cache_tools_list=True,
         params={
             "command": "npx",
             "args": ["-y", "anki-mcp-http", "--stdio"],

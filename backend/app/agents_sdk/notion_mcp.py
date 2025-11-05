@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 logger.info("Initializing Notion MCP Server")
 NotionMCPServer = MCPServerStdio(
-    cache_tools_list=True,  # Cache the tools list, for demonstration
+    cache_tools_list=True,
     params={
         "command": "npx",
         "args": ["-y", "@suekou/mcp-notion-server"],

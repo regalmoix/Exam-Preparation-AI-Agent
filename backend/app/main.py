@@ -12,11 +12,10 @@ from .services.config import config
 from .services.log_service import setup_logging  # noqa
 
 
-# Validate configuration on startup
 if not config.validate():
     raise RuntimeError("Invalid configuration. Please check your .env file and ensure all required variables are set.")
 
-# Test logging setup
+
 logger = logging.getLogger(__name__)
 logger.info("Logging system initialized successfully")
 

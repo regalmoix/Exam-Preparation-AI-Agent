@@ -1,5 +1,3 @@
-"""Server classes and dependencies for the exam assistant."""
-
 from __future__ import annotations
 
 import logging
@@ -9,7 +7,6 @@ from typing import Any
 from agents import Agent
 from agents import RunConfig
 from agents import Runner
-from agents import enable_verbose_stdout_logging
 from agents.model_settings import ModelSettings
 from chatkit.agents import AgentContext
 from chatkit.agents import stream_agent_response
@@ -23,16 +20,10 @@ from chatkit.types import UserMessageItem
 from openai.types.responses import ResponseInputContentParam
 
 from ..agents_sdk import TriageAgent
-from .config import config
 from .memory_store import MemoryStore
 
 
 logger = logging.getLogger(__name__)
-
-
-if config.debug:
-    logger.info("Debug mode enabled - enabling verbose stdout logging")
-    enable_verbose_stdout_logging()
 
 
 def _user_message_text(item: UserMessageItem) -> str:
@@ -49,8 +40,6 @@ def _is_tool_completion_item(item: Any) -> bool:
 
 
 class ExamPrepAssistantServer(ChatKitServer[dict[str, Any]]):
-    """Simplified exam preparation assistant server focused on study assistance."""
-
     def __init__(self, agent: Agent[AgentContext]) -> None:
         logger.info("Initializing ExamPrepAssistantServer")
         self.store = MemoryStore()
@@ -112,12 +101,10 @@ class ExamPrepAssistantServer(ChatKitServer[dict[str, Any]]):
         raise RuntimeError("File attachments are not supported in this demo.")
 
 
-# Global server instance
 logger.info("Creating global ExamPrepAssistantServer instance")
 exam_prep_server = ExamPrepAssistantServer(agent=TriageAgent)
 
 
 def get_server() -> ExamPrepAssistantServer:
-    """Dependency to get the exam prep server instance."""
     logger.debug("Returning exam prep server instance")
     return exam_prep_server

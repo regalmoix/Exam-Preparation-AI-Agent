@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 logger.info("Initializing Anki MCP Server")
 AnkiMCPServer = MCPServerStdio(
-    cache_tools_list=True,  # Cache the tools list, for demonstration
+    cache_tools_list=True,
     # tool_filter=create_static_tool_filter(
     #     allowed_tool_names=["list_decks", "create_deck", "get_due_cards", "present_card", "addNote", "findNotes"]
     # ),

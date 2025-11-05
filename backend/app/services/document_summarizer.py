@@ -1,5 +1,3 @@
-"""Document summarization service for generating intelligent descriptions."""
-
 from __future__ import annotations
 
 import logging
@@ -14,34 +12,27 @@ logger = logging.getLogger(__name__)
 
 
 class DocumentSummarizer:
-    """Service for generating intelligent summaries and descriptions of uploaded documents."""
-
     def __init__(self):
-        """Initialize the document summarizer."""
         logger.info("Initializing DocumentSummarizer")
         self.client = AsyncOpenAI(api_key=config.openai_api_key)
 
     async def generate_description(self, file_content: bytes, filename: str) -> str:
-        """Generate a concise 1-2 line description of the document content."""
         logger.debug(f"Generating description for document: {filename}")
 
         try:
-            # Try to decode the content as text
             try:
                 text_content = file_content.decode("utf-8")
                 logger.debug(f"Successfully decoded {filename} as UTF-8 text")
             except UnicodeDecodeError:
                 logger.debug(f"Failed to decode {filename} as UTF-8, using fallback description")
-                # For non-text files, use filename-based description
+
                 return self._generate_fallback_description(filename)
 
-            # Limit content size for API efficiency
-            max_content_size = 4000  # Conservative limit for API calls
+            max_content_size = 4000
             if len(text_content) > max_content_size:
                 logger.debug(f"Truncating content for {filename}: {len(text_content)} -> {max_content_size} chars")
                 text_content = text_content[:max_content_size] + "..."
 
-            # Generate description using OpenAI
             logger.debug(f"Calling OpenAI API to generate description for {filename}")
             response = await self.client.chat.completions.create(
                 model="gpt-4o-mini",
@@ -63,14 +54,13 @@ Keep it under 100 characters and make it useful for study organization.""",
                     },
                 ],
                 max_tokens=150,
-                temperature=0.3,  # Low temperature for consistent, factual descriptions
+                temperature=0.3,
             )
 
             description = response.choices[0].message.content or ""
 
-            # Clean and validate the description
             description = description.strip().strip('"').strip("'")
-            if len(description) > 200:  # Ensure reasonable length
+            if len(description) > 200:
                 description = description[:197] + "..."
 
             logger.debug(f"Generated description for {filename}: {description}")
@@ -81,14 +71,12 @@ Keep it under 100 characters and make it useful for study organization.""",
             return self._generate_fallback_description(filename)
 
     def _generate_fallback_description(self, filename: str) -> str:
-        """Generate a fallback description based on filename and extension."""
         logger.debug(f"Generating fallback description for {filename}")
 
         file_path = Path(filename)
         extension = file_path.suffix.lower()
         name_part = file_path.stem
 
-        # Generate description based on file type
         type_descriptions = {
             ".pdf": "PDF document",
             ".txt": "Text document",
@@ -100,7 +88,6 @@ Keep it under 100 characters and make it useful for study organization.""",
 
         type_desc = type_descriptions.get(extension, "Document")
 
-        # Try to extract meaningful info from filename
         if any(keyword in name_part.lower() for keyword in ["notes", "note"]):
             description = f"Study notes - {type_desc}"
         elif any(keyword in name_part.lower() for keyword in ["lecture", "slides"]):
@@ -118,7 +105,6 @@ Keep it under 100 characters and make it useful for study organization.""",
         return description
 
 
-# Global instance
 document_summarizer = DocumentSummarizer()
 
 __all__ = ["DocumentSummarizer", "document_summarizer"]

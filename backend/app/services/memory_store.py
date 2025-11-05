@@ -24,8 +24,6 @@ class _ThreadState:
 
 
 class MemoryStore(Store[dict[str, Any]]):
-    """Simple in-memory store compatible with the ChatKit server interface."""
-
     def __init__(self) -> None:
         logger.info("Initializing MemoryStore")
         self._threads: dict[str, _ThreadState] = {}
@@ -33,7 +31,6 @@ class MemoryStore(Store[dict[str, Any]]):
 
     @staticmethod
     def _coerce_thread_metadata(thread: ThreadMetadata | Thread) -> ThreadMetadata:
-        """Return thread metadata without any embedded items (openai-chatkit>=1.0)."""
         has_items = isinstance(thread, Thread) or "items" in getattr(thread, "model_fields_set", set())
         if not has_items:
             return thread.model_copy(deep=True)
@@ -42,7 +39,6 @@ class MemoryStore(Store[dict[str, Any]]):
         data.pop("items", None)
         return ThreadMetadata(**data).model_copy(deep=True)
 
-    # -- Thread metadata -------------------------------------------------
     async def load_thread(self, thread_id: str, context: dict[str, Any]) -> ThreadMetadata:
         logger.debug(f"Loading thread: {thread_id}")
         state = self._threads.get(thread_id)
@@ -97,7 +93,6 @@ class MemoryStore(Store[dict[str, Any]]):
     async def delete_thread(self, thread_id: str, context: dict[str, Any]) -> None:
         self._threads.pop(thread_id, None)
 
-    # -- Thread items ----------------------------------------------------
     def _items(self, thread_id: str) -> list[ThreadItem]:
         state = self._threads.get(thread_id)
         if state is None:
@@ -154,9 +149,6 @@ class MemoryStore(Store[dict[str, Any]]):
     async def delete_thread_item(self, thread_id: str, item_id: str, context: dict[str, Any]) -> None:
         items = self._items(thread_id)
         self._threads[thread_id].items = [item for item in items if item.id != item_id]
-
-    # -- Files -----------------------------------------------------------
-    # These methods are not currently used but required to be compatible with the Store interface.
 
     async def save_attachment(
         self,

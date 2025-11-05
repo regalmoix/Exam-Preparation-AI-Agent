@@ -1,5 +1,3 @@
-"""Vector store management API endpoints for exam assistant."""
-
 from __future__ import annotations
 
 import logging
@@ -24,7 +22,6 @@ router = APIRouter()
 
 @router.get("/vector-store")
 async def get_vector_store_info() -> dict[str, Any]:
-    """Get information about the exam assistant vector store."""
     logger.info("Getting vector store information")
 
     try:
@@ -51,12 +48,11 @@ async def list_vector_store_files(
     after: str | None = None,
     before: str | None = None,
 ) -> dict[str, Any]:
-    """List files in the exam assistant vector store."""
     try:
         files = await vector_store_service.list_vector_store_files(limit=limit, order=order, after=after, before=before)
         return {
             "files": as_file_dicts(files),
-            "has_more": len(files) == limit,  # Simple pagination indicator
+            "has_more": len(files) == limit,
         }
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
@@ -64,14 +60,12 @@ async def list_vector_store_files(
 
 @router.post("/vector-store/files")
 async def upload_file_to_vector_store(file: Annotated[UploadFile, File()]) -> dict[str, Any]:
-    """Upload a file to the exam assistant vector store with intelligent description generation."""
     logger.info(f"Uploading file to vector store: {file.filename}")
 
     if not file.filename:
         logger.error("File upload attempted without filename")
         raise HTTPException(status_code=400, detail="File must have a filename")
 
-    # Validate file type (optional - you can customize this)
     allowed_extensions = {".pdf", ".txt", ".md", ".html", ".docx", ".json"}
     file_extension = Path(file.filename).suffix.lower()
     if file_extension not in allowed_extensions:
@@ -97,7 +91,6 @@ async def upload_file_to_vector_store(file: Annotated[UploadFile, File()]) -> di
 
 @router.get("/vector-store/files/{file_id}")
 async def get_vector_store_file_info(file_id: str) -> dict[str, Any]:
-    """Get information about a specific file in the exam assistant vector store."""
     try:
         file_info = await vector_store_service.get_file_info(file_id)
         return {
@@ -117,7 +110,6 @@ async def get_vector_store_file_info(file_id: str) -> dict[str, Any]:
 
 @router.delete("/vector-store/files/{file_id}")
 async def delete_file_from_vector_store(file_id: str) -> dict[str, str]:
-    """Delete a file from the exam assistant vector store."""
     logger.info(f"Deleting file from vector store: {file_id}")
 
     try:

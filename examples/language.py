@@ -41,7 +41,6 @@ triage_agent = Agent(
 
 
 async def main():
-    # We'll create an ID for this conversation, so we can link each trace
     conversation_id = str(uuid.uuid4().hex[:16])
 
     msg = input("Hi! We speak French, Spanish and English. How can I help? ")
@@ -49,8 +48,6 @@ async def main():
     inputs: list[TResponseInputItem] = [{"content": msg, "role": "user"}]
 
     while True:
-        # Each conversation turn is a single trace. Normally, each input from the user would be an
-        # API request to your app, and you can wrap the request in a trace()
         with trace("Routing example", group_id=conversation_id):
             result = Runner.run_streamed(
                 agent,

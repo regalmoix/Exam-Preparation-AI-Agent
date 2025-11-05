@@ -13,7 +13,6 @@ from agents import trace
 from pydantic import BaseModel
 
 
-# Tool definitions
 @function_tool
 def store_and_upload_research_summary(research_summary: str):
     pass
@@ -112,7 +111,6 @@ class WorkflowInput(BaseModel):
     input_as_text: str
 
 
-# Main code entrypoint
 async def run_workflow(workflow_input: WorkflowInput):
     with trace("New workflow"):
         workflow = workflow_input.model_dump()

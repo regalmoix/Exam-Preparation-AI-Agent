@@ -6,11 +6,7 @@
     "frontend": "npm --prefix frontend install && npm --prefix frontend run dev",
     "backend": "uv sync --directory backend && uv run --directory backend uvicorn app.main:app --reload --port 8002",
     "ankimcp": "npx anki-mcp-http --anki-connect http://localhost:8765",
-    "test": "npm run test:api && npm run test:e2e",
-    "test:api": "cd backend && uv run pytest ../tests/api/ -v",
-    "test:e2e": "npx playwright test",
-    "test:e2e-ui": "npx playwright test --ui",
-    "test:api-watch": "cd backend && uv run pytest ../tests/api/ -v --tb=short -f"
+    "notionmcp": "npx -y @suekou/mcp-notion-server"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",

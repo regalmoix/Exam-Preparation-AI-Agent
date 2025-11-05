@@ -16,10 +16,9 @@ async def run(mcp_server: MCPServer):
         instructions="Help the user with Notion notes",
         mcp_servers=[mcp_server],
     )
-    # print(await agent.get_mcp_tools(RunContextWrapper(context=None)))
 
     message = "Create a sample placeholder template meeting notes for today's standup with action items and replace the existing contents of 'AI Workshop Notes' with these notes?"
-    # message = "Can you list all pages in my Notion workspace"
+
     print("\n" + "-" * 40)
     print(f"Running: {message}")
     result = await Runner.run(starting_agent=agent, input=message)

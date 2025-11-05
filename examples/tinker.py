@@ -18,13 +18,10 @@ logging.getLogger().setLevel(logging.DEBUG)
 
 logfire.configure()
 logfire.instrument_openai_agents()
-# Load environment variables
+
 load_dotenv()
 
 model = os.getenv("MODEL_CHOICE", "gpt-4o-mini")
-
-
-# --- Models for structured outputs ---
 
 
 class FlightRecommendation(BaseModel):
@@ -52,13 +49,8 @@ class TravelPlan(BaseModel):
     notes: str = Field(description="Additional notes or recommendations")
 
 
-# --- Tools ---
-
-
 @function_tool
 def get_weather_forecast(city: str, date: str) -> str:
-    """Get the weather forecast for a city on a specific date."""
-    # In a real implementation, this would call a weather API
     weather_data = {
         "New York": {"sunny": 0.3, "rainy": 0.4, "cloudy": 0.3},
         "Los Angeles": {"sunny": 0.8, "rainy": 0.1, "cloudy": 0.1},
@@ -71,7 +63,7 @@ def get_weather_forecast(city: str, date: str) -> str:
 
     if city in weather_data:
         conditions = weather_data[city]
-        # Simple simulation based on probabilities
+
         highest_prob = max(conditions, key=conditions.get)
         temp_range = {
             "New York": "15-25°C",
@@ -89,8 +81,6 @@ def get_weather_forecast(city: str, date: str) -> str:
 
 @function_tool
 def search_flights(origin: str, destination: str, date: str) -> str:
-    """Search for flights between two cities on a specific date."""
-    # In a real implementation, this would call a flight search API
     flight_options = [
         {"airline": "SkyWays", "departure_time": "08:00", "arrival_time": "10:30", "price": 350.00, "direct": True},
         {"airline": "OceanAir", "departure_time": "12:45", "arrival_time": "15:15", "price": 275.50, "direct": True},
@@ -108,8 +98,6 @@ def search_flights(origin: str, destination: str, date: str) -> str:
 
 @function_tool
 def search_hotels(city: str, check_in: str, check_out: str, max_price: float | None = None) -> str:
-    """Search for hotels in a city for specific dates within a price range."""
-    # In a real implementation, this would call a hotel search API
     hotel_options = [
         {
             "name": "City Center Hotel",
@@ -131,7 +119,6 @@ def search_hotels(city: str, check_in: str, check_out: str, max_price: float | N
         },
     ]
 
-    # Filter by max price if provided
     if max_price is not None:
         filtered_hotels = [hotel for hotel in hotel_options if hotel["price_per_night"] <= max_price]
     else:
@@ -139,8 +126,6 @@ def search_hotels(city: str, check_in: str, check_out: str, max_price: float | N
 
     return json.dumps(filtered_hotels)
 
-
-# --- Specialized Agents ---
 
 flight_agent = Agent(
     name="Flight Specialist",
@@ -178,7 +163,6 @@ hotel_agent = Agent(
     output_type=HotelRecommendation,
 )
 
-# --- Main Travel Agent ---
 
 travel_agent = Agent(
     name="Travel Planner",
@@ -208,11 +192,7 @@ travel_agent = Agent(
 )
 
 
-# --- Main Function ---
-
-
 async def main():
-    # Example queries to test different aspects of the system
     queries = [
         "I need a flight from New York to Chicago tomorrow",
         "Find me a hotel in Paris with a pool for under $300 per night",
@@ -226,8 +206,7 @@ async def main():
 
         print("\nFINAL RESPONSE:")
 
-        # Format the output based on the type of response
-        if hasattr(result.final_output, "airline"):  # Flight recommendation
+        if hasattr(result.final_output, "airline"):
             flight = result.final_output
             print("\n✈️ FLIGHT RECOMMENDATION ✈️")
             print(f"Airline: {flight.airline}")
@@ -237,7 +216,7 @@ async def main():
             print(f"Direct Flight: {'Yes' if flight.direct_flight else 'No'}")
             print(f"\nWhy this flight: {flight.recommendation_reason}")
 
-        elif hasattr(result.final_output, "name") and hasattr(result.final_output, "amenities"):  # Hotel recommendation
+        elif hasattr(result.final_output, "name") and hasattr(result.final_output, "amenities"):
             hotel = result.final_output
             print("\n🏨 HOTEL RECOMMENDATION 🏨")
             print(f"Name: {hotel.name}")
@@ -250,7 +229,7 @@ async def main():
 
             print(f"\nWhy this hotel: {hotel.recommendation_reason}")
 
-        elif hasattr(result.final_output, "destination"):  # Travel plan
+        elif hasattr(result.final_output, "destination"):
             travel_plan = result.final_output
             print(f"\n🌍 TRAVEL PLAN FOR {travel_plan.destination.upper()} 🌍")
             print(f"Duration: {travel_plan.duration_days} days")
@@ -262,7 +241,7 @@ async def main():
 
             print(f"\n📝 NOTES: {travel_plan.notes}")
 
-        else:  # Generic response
+        else:
             print(result.final_output)
 
 

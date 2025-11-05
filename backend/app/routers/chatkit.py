@@ -1,5 +1,3 @@
-"""ChatKit API endpoints for exam assistant."""
-
 from __future__ import annotations
 
 import logging
@@ -28,7 +26,6 @@ router = APIRouter()
 async def chatkit_endpoint(
     request: Request, server: Annotated[ExamPrepAssistantServer, Depends(get_server)]
 ) -> Response:
-    """Main ChatKit interaction endpoint for the exam assistant."""
     logger.info(f"Received chatkit request from {request.client.host if request.client else 'unknown'}")
 
     try:
@@ -58,6 +55,5 @@ async def chatkit_endpoint(
 
 @router.get("/health")
 async def health_check() -> dict[str, str]:
-    """Health check endpoint for the exam assistant."""
     logger.debug("Health check endpoint called")
     return {"status": "healthy"}

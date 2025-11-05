@@ -1,5 +1,3 @@
-"""Configuration management for the Study Assistant AI Workshop backend."""
-
 from __future__ import annotations
 
 import logging
@@ -13,13 +11,9 @@ logger = logging.getLogger(__name__)
 
 
 class Config:
-    """Configuration class that loads environment variables with proper defaults."""
-
     def __init__(self):
-        """Initialize configuration by loading environment variables."""
         logger.info("Initializing configuration")
 
-        # Load from .env file if it exists (searches up the directory tree)
         dotenv_path = find_dotenv()
         if dotenv_path:
             logger.debug(f"Loading environment from {dotenv_path}")
@@ -27,14 +21,13 @@ class Config:
         else:
             logger.warning("No .env file found")
 
-        # Required environment variables
         self.openai_api_key = self._get_required_env("OPENAI_API_KEY")
         self.notion_token = self._get_required_env("NOTION_TOKEN")
         self.exam_prep_vector_store_id = self._get_required_env("EXAM_PREP_VECTOR_STORE_ID")
 
-        # Optional environment variables with defaults
         self.logfire_token = os.getenv("LOGFIRE_TOKEN", "")
         self.debug = os.getenv("DEBUG") not in (None, "0", "false", 0, False, "False")
+        self.log_level = os.getenv("LOG_LEVEL", "INFO").upper()
         self.api_host = os.getenv("API_HOST", "127.0.0.1")
         self.api_port = int(os.getenv("API_PORT", "8002"))
 
@@ -45,7 +38,6 @@ class Config:
 
     @staticmethod
     def _get_required_env(key: str) -> str:
-        """Get a required environment variable, raising an error if not set."""
         value = os.getenv(key)
         if not value:
             logger.error(f"Required environment variable {key} is not set")
@@ -69,5 +61,4 @@ class Config:
             return False
 
 
-# Global configuration instance
 config = Config()
