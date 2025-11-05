@@ -42,7 +42,7 @@ export function FileUpload({ onUploadComplete, className }: FileUploadProps) {
         const formData = new FormData();
         formData.append("file", file);
 
-        const response = await fetch(`${API_BASE}/vector-store/files`, {
+        const response = await fetch(`${API_BASE}/documents/upload`, {
           method: "POST",
           body: formData,
         });

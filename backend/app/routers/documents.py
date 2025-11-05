@@ -3,11 +3,14 @@ from __future__ import annotations
 import logging
 import mimetypes
 from pathlib import Path
+from typing import Annotated
 from typing import Any
 
 import anyio
 from fastapi import APIRouter
+from fastapi import File
 from fastapi import HTTPException
+from fastapi import UploadFile
 from fastapi.responses import Response
 
 from ..models.document_metadata import metadata_store
@@ -31,22 +34,61 @@ async def list_documents() -> dict[str, Any]:
         documents = []
         for file in files:
             if metadata := metadata_store.get_metadata(file.id):
-                documents.append(
-                    {
-                        "id": file.id,
-                        "filename": metadata.original_filename,
-                        "title": metadata.title,
-                        "description": metadata.description,
-                        "created_at": file.created_at,
-                        "status": file.status,
-                        "usage_bytes": file.usage_bytes or metadata.file_size,
-                    }
-                )
-        logger.info(f"Successfully listed {len(documents)} documents")
+                # Only include documents that have a local file path and the file exists
+                if metadata.local_file_path:
+                    local_path = Path(metadata.local_file_path)
+                    if local_path.exists():
+                        documents.append(
+                            {
+                                "id": file.id,
+                                "filename": metadata.original_filename,
+                                "title": metadata.title,
+                                "description": metadata.description,
+                                "created_at": file.created_at,
+                                "status": file.status,
+                                "usage_bytes": file.usage_bytes or metadata.file_size,
+                            }
+                        )
+                    else:
+                        logger.debug(f"Skipping document {file.id}: local file not found at {metadata.local_file_path}")
+                else:
+                    logger.debug(f"Skipping document {file.id}: no local file path")
+        logger.info(f"Successfully listed {len(documents)} locally available documents")
         return {"documents": documents}
     except RuntimeError as exc:
         logger.exception(f"Error listing documents: {exc}")
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post("/documents/upload")
+async def upload_file_to_vector_store(file: Annotated[UploadFile, File()]) -> dict[str, Any]:
+    logger.info(f"Uploading file to vector store: {file.filename}")
+
+    if not file.filename:
+        logger.error("File upload attempted without filename")
+        raise HTTPException(status_code=400, detail="File must have a filename")
+
+    allowed_extensions = {".pdf", ".txt", ".md", ".html", ".docx", ".json"}
+    file_extension = Path(file.filename).suffix.lower()
+    if file_extension not in allowed_extensions:
+        logger.warning(f"Unsupported file type upload attempted: {file_extension}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"File type {file_extension} not supported. Allowed types: {', '.join(allowed_extensions)}",
+        )
+
+    try:
+        content = await file.read()
+        logger.debug(f"File read successfully: {file.filename}, size: {len(content)} bytes")
+
+        data = await vector_store_service.add_file_to_vector_store(content, file.filename, file_extension)
+        logger.info(f"File uploaded successfully to vector store: {file.filename}")
+        return data
+    except RuntimeError as exc:
+        logger.error(f"Error uploading file {file.filename}: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    finally:
+        await file.close()
 
 
 @router.get("/documents/{document_id}")
