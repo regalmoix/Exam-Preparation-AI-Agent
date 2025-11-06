@@ -3,7 +3,7 @@ target-version = "py311"
 
 include = [
     "backend/app/**/*.py",
-    "examples/**.py"
+    "resources/**/*.py",
 ]
 
 [format]

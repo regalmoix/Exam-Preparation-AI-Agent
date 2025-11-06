@@ -9,6 +9,7 @@ pytest
 pytest-asyncio
 logfire
 logfire[fastapi]
+prettytable
 
 [dev]
 ruff

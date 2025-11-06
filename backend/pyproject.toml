@@ -15,6 +15,7 @@ dependencies = [
     "pytest-asyncio",
     "logfire",
     "logfire[fastapi]",
+    "prettytable",
 ]
 
 [project.optional-dependencies]
