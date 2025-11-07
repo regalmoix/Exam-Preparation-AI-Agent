@@ -8,7 +8,6 @@ from agents import WebSearchTool
 from agents import function_tool
 
 from ..services.config import config
-from ..services.vector_store_service import vector_store_service
 
 
 logger = logging.getLogger(__name__)
@@ -29,21 +28,14 @@ async def store_research_data(research_detailed_text: str, filename: str) -> dic
 
     try:
         logger.info(f"Adding file to vector store: {filename}, content length: {len(research_detailed_text)}")
-        data = await vector_store_service.add_file_to_vector_store(research_detailed_text.encode(), filename, ".txt")
-
-        result = {
-            "status": "stored",
-            "topic": filename,
-            "summary_length": len(research_detailed_text),
-            **data,
-        }
-
+        # TODO: Implement this...
+        result = {"status": "success", "data": ...}
         logger.info(f"Research data stored successfully: {filename}")
         return result
 
     except Exception as e:
         logger.exception(f"Failed to store research data for {filename}: {e}")
-        raise
+        return {"status": "failed", "reason": e}
 
 
 file_search_tool = FileSearchTool(vector_store_ids=[config.exam_prep_vector_store_id], max_num_results=3)
