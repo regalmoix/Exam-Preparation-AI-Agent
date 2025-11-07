@@ -5,7 +5,6 @@
     "start": "concurrently --kill-others-on-fail --names backend,frontend \"npm run backend\" \"npm run frontend\"",
     "frontend": "npm --prefix frontend install && npm --prefix frontend run dev",
     "backend": "uv sync --directory backend && uv run --directory backend uvicorn app.main:app --reload --port 8002",
-    "ankimcp": "npx anki-mcp-http --anki-connect http://localhost:8765",
     "notionmcp": "npx -y @suekou/mcp-notion-server"
   },
   "devDependencies": {

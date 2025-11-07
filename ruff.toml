@@ -5,6 +5,9 @@ include = [
     "backend/app/**/*.py",
     "resources/**/*.py",
 ]
+exclude = [
+    "setup/**.py"
+]
 
 [format]
 quote-style = "double"

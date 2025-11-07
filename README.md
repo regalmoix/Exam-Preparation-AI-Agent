@@ -5,10 +5,37 @@
 - ChatKit Web Component wrapped in React with a document panel.
 - Vector-store tooling for ingesting documents and exposing REST endpoints for previews, uploads.
 
+## Quick Setup Verification
+
+**Before starting, run the setup verification script to ensure your system is ready:**
+
+### Windows
+```cmd
+cd setup
+setup_check.bat
+```
+
+### macOS / Linux
+```bash
+cd setup
+./setup_check.sh
+```
+
+The script will:
+- ✅ Check all prerequisites are installed and correct versions
+- ✅ Auto-create `.env` file from template if needed
+- ✅ Offer to install missing tools (like `uv`) automatically
+- ✅ Provide detailed instructions for anything that needs manual setup
+- ✅ Test that dependencies can be installed
+
+**📖 For detailed instructions and troubleshooting, see [setup/SETUP_GUIDE.md](setup/SETUP_GUIDE.md)**
+
 ## Prerequisites
 - Python 3.11+
-- Node.js 22+ (Use `nvm`)
+- [nvm](https://github.com/nvm-sh/nvm) (Node Version Manager)
+- Node.js 22+ (installed via `nvm`)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
+- [git](https://git-scm.com/)
 - OpenAI API key as `OPENAI_API_KEY` in `.env`
 
 ## Steps to Run:
