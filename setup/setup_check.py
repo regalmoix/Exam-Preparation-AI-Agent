@@ -16,6 +16,7 @@ import platform
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 
@@ -275,9 +276,9 @@ LOG_LEVEL=INFO
         return False
 
 
-def try_install_uv() -> bool:
-    """Try to install uv automatically"""
-    print_info("Attempting to install uv...")
+def auto_install_uv() -> bool:
+    """Automatically install uv without user prompts"""
+    print_info("Auto-installing uv...")
 
     system = platform.system()
 
@@ -285,27 +286,234 @@ def try_install_uv() -> bool:
         cmd = ["curl", "-LsSf", "https://astral.sh/uv/install.sh"]
         try:
             # Download and pipe to sh
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=60)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=120)
             if result.returncode == 0:
                 # Pipe to sh
-                subprocess.run(["sh"], check=False, input=result.stdout, timeout=60)
-                print_success("uv installed successfully!")
-                return True
+                install_result = subprocess.run(
+                    ["sh"], check=False, input=result.stdout, text=True, timeout=120
+                )
+                if install_result.returncode == 0:
+                    print_success("uv installed successfully!")
+                    return True
+                else:
+                    print_warning("uv installation script failed")
+                    return False
         except Exception as e:
             print_warning(f"Auto-installation failed: {e}")
             return False
 
     elif system == "Windows":
-        cmd = ["powershell", "-c", "irm https://astral.sh/uv/install.ps1 | iex"]
+        # Try PowerShell with execution policy bypass
+        cmd = [
+            "powershell",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            "irm https://astral.sh/uv/install.ps1 | iex",
+        ]
         try:
-            subprocess.run(cmd, check=False, timeout=60)
-            print_success("uv installed successfully!")
-            return True
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=120)
+            if result.returncode == 0:
+                print_success("uv installed successfully!")
+                return True
+            else:
+                print_warning(f"uv installation failed: {result.stderr}")
+                return False
         except Exception as e:
             print_warning(f"Auto-installation failed: {e}")
             return False
 
     return False
+
+
+def auto_install_git() -> bool:
+    """Automatically install git without user prompts"""
+    print_info("Auto-installing git...")
+
+    system = platform.system()
+
+    if system == "Windows":
+        # Try winget first
+        winget_available, _ = run_command(["winget", "--version"])
+        if winget_available:
+            cmd = ["winget", "install", "--id", "Git.Git", "--accept-package-agreements", "--accept-source-agreements"]
+            try:
+                result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=300)
+                if result.returncode == 0:
+                    print_success("git installed successfully via winget!")
+                    return True
+                else:
+                    print_warning(f"winget installation failed: {result.stderr}")
+            except Exception as e:
+                print_warning(f"winget installation failed: {e}")
+
+        # Fallback: provide download link
+        print_warning("Automatic git installation failed. Please install manually:")
+        print_info("  Download from: https://git-scm.com/download/win")
+        print_info("  Or run: winget install Git.Git")
+        return False
+
+    elif system == "Darwin":  # macOS
+        # Try Homebrew
+        brew_available, _ = run_command(["brew", "--version"])
+        if brew_available:
+            cmd = ["brew", "install", "git"]
+            try:
+                result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=300)
+                if result.returncode == 0:
+                    print_success("git installed successfully via Homebrew!")
+                    return True
+            except Exception as e:
+                print_warning(f"Homebrew installation failed: {e}")
+
+        # Try Xcode Command Line Tools
+        print_info("Attempting to install Xcode Command Line Tools (includes git)...")
+        cmd = ["xcode-select", "--install"]
+        try:
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=30)
+            # This command returns non-zero if already installed, so we check git after
+            git_ok, _ = check_git()
+            if git_ok:
+                print_success("git is available (via Xcode Command Line Tools)")
+                return True
+        except Exception:
+            pass
+
+        print_warning("Automatic git installation failed. Please install manually:")
+        print_info("  Run: xcode-select --install")
+        print_info("  Or: brew install git")
+        return False
+
+    else:  # Linux
+        # Try apt (Debian/Ubuntu)
+        apt_available, _ = run_command(["apt", "--version"])
+        if apt_available:
+            cmd = ["sudo", "apt", "update"]
+            try:
+                subprocess.run(cmd, check=False, timeout=60)
+                cmd = ["sudo", "apt", "install", "-y", "git"]
+                result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=300)
+                if result.returncode == 0:
+                    print_success("git installed successfully via apt!")
+                    return True
+            except Exception as e:
+                print_warning(f"apt installation failed: {e}")
+
+        # Try dnf (Fedora/RHEL)
+        dnf_available, _ = run_command(["dnf", "--version"])
+        if dnf_available:
+            cmd = ["sudo", "dnf", "install", "-y", "git"]
+            try:
+                result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=300)
+                if result.returncode == 0:
+                    print_success("git installed successfully via dnf!")
+                    return True
+            except Exception as e:
+                print_warning(f"dnf installation failed: {e}")
+
+        print_warning("Automatic git installation failed. Please install manually:")
+        print_info("  Ubuntu/Debian: sudo apt install git")
+        print_info("  Fedora: sudo dnf install git")
+        return False
+
+
+def auto_install_node_npm() -> bool:
+    """Automatically install Node.js 22+ and npm without user prompts"""
+    print_info("Auto-installing Node.js and npm...")
+
+    system = platform.system()
+
+    if system == "Windows":
+        # Try winget first for Node.js LTS
+        winget_available, _ = run_command(["winget", "--version"])
+        if winget_available:
+            # Try to install Node.js 22+ specifically
+            cmd = ["winget", "install", "--id", "OpenJS.NodeJS.LTS", "--accept-package-agreements", "--accept-source-agreements"]
+            try:
+                result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=600)
+                if result.returncode == 0:
+                    # Wait a moment for PATH to update, then check
+                    time.sleep(2)
+                    node_ok, node_version = check_node_version()
+                    npm_ok, npm_version = check_npm()
+                    if node_ok and npm_ok:
+                        print_success(f"Node.js v{node_version} and npm {npm_version} installed successfully!")
+                        return True
+                    else:
+                        print_warning("Node.js installed but version check failed. Please restart terminal.")
+                        return True  # Assume success, user needs to restart
+            except Exception as e:
+                print_warning(f"winget installation failed: {e}")
+
+        # Fallback: provide instructions
+        print_warning("Automatic Node.js installation failed. Please install manually:")
+        print_info("  Download from: https://nodejs.org/")
+        print_info("  Or run: winget install OpenJS.NodeJS.LTS")
+        return False
+
+    else:  # Unix-like systems (macOS, Linux)
+        # Try installing nvm first, then Node.js via nvm
+        nvm_ok, _ = check_nvm()
+        if not nvm_ok:
+            print_info("Installing nvm (Node Version Manager)...")
+            nvm_install_cmd = [
+                "bash",
+                "-c",
+                "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash",
+            ]
+            try:
+                result = subprocess.run(nvm_install_cmd, check=False, capture_output=True, text=True, timeout=120)
+                if result.returncode == 0:
+                    print_success("nvm installed successfully!")
+                    # Source nvm and install Node.js 22
+                    nvm_source_cmd = [
+                        "bash",
+                        "-c",
+                        "export NVM_DIR=\"$HOME/.nvm\" && [ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\" && nvm install 22 && nvm use 22",
+                    ]
+                    install_result = subprocess.run(nvm_source_cmd, check=False, capture_output=True, text=True, timeout=300)
+                    if install_result.returncode == 0:
+                        print_success("Node.js 22 installed via nvm!")
+                        print_warning("Please restart your terminal or run: source ~/.bashrc (or ~/.zshrc)")
+                        return True
+                    else:
+                        # nvm installed but Node.js installation failed
+                        print_warning("nvm installed but Node.js installation failed. Please restart terminal and run: nvm install 22")
+            except Exception as e:
+                print_warning(f"nvm installation failed: {e}")
+        else:
+            # nvm is already installed, try to use it
+            print_info("Using existing nvm to install Node.js 22...")
+            nvm_cmd = [
+                "bash",
+                "-c",
+                "export NVM_DIR=\"$HOME/.nvm\" && [ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\" && nvm install 22 && nvm use 22",
+            ]
+            try:
+                result = subprocess.run(nvm_cmd, check=False, capture_output=True, text=True, timeout=300)
+                if result.returncode == 0:
+                    print_success("Node.js 22 installed via nvm!")
+                    return True
+            except Exception as e:
+                print_warning(f"nvm Node.js installation failed: {e}")
+
+        # macOS: Try Homebrew
+        if system == "Darwin":
+            brew_available, _ = run_command(["brew", "--version"])
+            if brew_available:
+                cmd = ["brew", "install", "node@22"]
+                try:
+                    result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=600)
+                    if result.returncode == 0:
+                        print_success("Node.js installed via Homebrew!")
+                        return True
+                except Exception as e:
+                    print_warning(f"Homebrew installation failed: {e}")
+
+        print_warning("Automatic Node.js installation failed. Please install manually:")
+        print_info("  Install nvm: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash")
+        print_info("  Then: nvm install 22 && nvm use 22")
+        return False
 
 
 def check_project_structure() -> tuple[bool, list[str]]:
@@ -499,8 +707,18 @@ def main():
     if node_ok:
         print_success(f"Node.js v{node_version} (requires 22+)")
     else:
-        print_error(f"Node.js {node_version} - Version 22+ is required")
-        all_checks_passed = False
+        print_warning(f"Node.js {node_version} - Version 22+ is required, attempting auto-installation...")
+        if auto_install_node_npm():
+            # Re-check
+            node_ok, node_version = check_node_version()
+            if node_ok:
+                print_success(f"Node.js v{node_version} installed!")
+            else:
+                print_warning("Node.js installation completed but version check failed. Please restart terminal.")
+                all_checks_passed = False
+        else:
+            print_error("Node.js auto-installation failed")
+            all_checks_passed = False
 
     # Check npm
     print(f"\n{Colors.BOLD}Checking npm...{Colors.ENDC}")
@@ -508,17 +726,20 @@ def main():
     if npm_ok:
         print_success(f"npm {npm_version}")
     else:
-        print_error("npm not found (should come with Node.js)")
-        all_checks_passed = False
+        # npm should come with Node.js, but if Node.js was just installed, it might not be in PATH yet
+        if not node_ok:
+            print_warning("npm not found (should come with Node.js). Please restart terminal after Node.js installation.")
+        else:
+            print_error("npm not found (should come with Node.js)")
+            all_checks_passed = False
 
-    # Check nvm (required)
-    print(f"\n{Colors.BOLD}Checking nvm (required)...{Colors.ENDC}")
+    # Check nvm (informational only, not required if Node.js is installed)
+    print(f"\n{Colors.BOLD}Checking nvm (optional)...{Colors.ENDC}")
     nvm_ok, nvm_version = check_nvm()
     if nvm_ok:
         print_success(f"nvm {nvm_version}")
     else:
-        print_error("nvm not found - Required for managing Node.js versions")
-        all_checks_passed = False
+        print_info("nvm not found (optional - Node.js can be installed without it)")
 
     # Check uv
     print(f"\n{Colors.BOLD}Checking uv...{Colors.ENDC}")
@@ -526,18 +747,18 @@ def main():
     if uv_ok:
         print_success(f"uv {uv_version}")
     else:
-        print_error("uv not found")
-        all_checks_passed = False
-
-        # Try to install uv
-        response = input(f"\n{Colors.OKCYAN}Would you like to try auto-installing uv? (y/n): {Colors.ENDC}")
-        if response.lower() in ["y", "yes"]:
-            if try_install_uv():
-                # Re-check
-                uv_ok, uv_version = check_uv()
-                if uv_ok:
-                    print_success(f"uv {uv_version} installed!")
-                    all_checks_passed = True
+        print_warning("uv not found - attempting auto-installation...")
+        if auto_install_uv():
+            # Re-check
+            uv_ok, uv_version = check_uv()
+            if uv_ok:
+                print_success(f"uv {uv_version} installed!")
+            else:
+                print_warning("uv installation completed but not found in PATH. Please restart terminal.")
+                all_checks_passed = False
+        else:
+            print_error("uv auto-installation failed")
+            all_checks_passed = False
 
     # Check git (required)
     print(f"\n{Colors.BOLD}Checking git (required)...{Colors.ENDC}")
@@ -545,8 +766,18 @@ def main():
     if git_ok:
         print_success(f"{git_version}")
     else:
-        print_error("git not found - Required for version control")
-        all_checks_passed = False
+        print_warning("git not found - attempting auto-installation...")
+        if auto_install_git():
+            # Re-check
+            git_ok, git_version = check_git()
+            if git_ok:
+                print_success(f"{git_version} installed!")
+            else:
+                print_warning("git installation completed but not found in PATH. Please restart terminal.")
+                all_checks_passed = False
+        else:
+            print_error("git auto-installation failed")
+            all_checks_passed = False
 
     # Check project structure
     print(f"\n{Colors.BOLD}Checking project structure...{Colors.ENDC}")
@@ -571,12 +802,13 @@ def main():
     else:
         print_success(".env file exists")
 
-    # Check environment variables
+    # Check environment variables (non-blocking - warnings only)
     required_vars_set = all(
         [env_vars["OPENAI_API_KEY"], env_vars["NOTION_TOKEN"], env_vars["EXAM_PREP_VECTOR_STORE_ID"]]
     )
 
-    print(f"\n{Colors.BOLD}Environment Variables:{Colors.ENDC}")
+    print(f"\n{Colors.BOLD}Environment Variables (informational):{Colors.ENDC}")
+    env_warnings = []
     for var, is_set in env_vars.items():
         if var == "LOGFIRE_TOKEN":  # Optional
             if is_set:
@@ -586,8 +818,12 @@ def main():
         elif is_set:
             print_success(var)
         else:
-            print_error(f"{var} - NOT SET")
-            all_checks_passed = False
+            print_warning(f"{var} - NOT SET (required for application)")
+            env_warnings.append(var)
+    
+    # Add env warnings to warnings list but don't fail the check
+    if env_warnings:
+        warnings.append(f"Environment variables not set: {', '.join(env_warnings)}")
 
     # Test dependency installation if prerequisites are met
     if all_checks_passed and uv_ok and npm_ok:
@@ -612,21 +848,30 @@ def main():
     # Print summary
     print_header("SUMMARY")
 
-    if all_checks_passed and required_vars_set:
-        print_success(f"{Colors.BOLD}All checks passed! Your system is ready.{Colors.ENDC}")
+    if all_checks_passed:
+        print_success(f"{Colors.BOLD}All dependency checks passed! Your system is ready.{Colors.ENDC}")
 
         if warnings:
             print(f"\n{Colors.BOLD}Warnings:{Colors.ENDC}")
             for warning in warnings:
                 print_warning(warning)
 
+        if not required_vars_set:
+            print(f"\n{Colors.BOLD}Note:{Colors.ENDC} Environment variables are not fully configured.")
+            print_info("The application may not work until you set up the required API keys.")
+            print_env_setup_instructions(env_vars)
+
         print_final_steps()
         return 0
     else:
-        print_error(f"{Colors.BOLD}Some checks failed. Please address the issues below.{Colors.ENDC}")
+        print_error(f"{Colors.BOLD}Some dependency checks failed. Please address the issues below.{Colors.ENDC}")
 
-        if not all_checks_passed:
-            print_installation_instructions()
+        if warnings:
+            print(f"\n{Colors.BOLD}Warnings:{Colors.ENDC}")
+            for warning in warnings:
+                print_warning(warning)
+
+        print_installation_instructions()
 
         if not required_vars_set:
             print_env_setup_instructions(env_vars)
